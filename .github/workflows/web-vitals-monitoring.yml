@@ -17,7 +17,7 @@ on:
 
 env:
   GOOGLE_PSI_API_KEY: ${{ secrets.GOOGLE_PSI_API_KEY }}
-  PRODUCTION_URL: ${{ vars.PRODUCTION_URL || 'https://webvitals.contentstackapps.com/' }}
+  PRODUCTION_URL: ${{ vars.PRODUCTION_URL || 'https://www.contentstack.com/' }}
   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
   PERFORMANCE_THRESHOLD_LCP: ${{ vars.PERFORMANCE_THRESHOLD_LCP || '2.5' }}
   PERFORMANCE_THRESHOLD_CLS: ${{ vars.PERFORMANCE_THRESHOLD_CLS || '0.1' }}
