@@ -11,7 +11,7 @@ const path = require('path');
 
 // Configuration
 const config = {
-  psiApiKey: process.env.GOOGLE_PSI_API_KEY,
+  psiApiKey: process.env.GOOGLE_PSI_API_KEY || 'AIzaSyD-9tSrQWn772721_FAs2bbKmX4Yoozg4',
   productionUrl: process.env.PRODUCTION_URL || 'https://webvitals.contentstackapps.com/',
   customUrl: process.env.INPUT_URL,
   thresholds: {
