@@ -6,7 +6,12 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "monitor": "node .github/scripts/web-vitals-monitor.js",
+    "lighthouse": "lighthouse",
+    "lighthouse:ci": "lhci autorun",
+    "performance:test": "npm run monitor && npm run lighthouse:ci",
+    "performance:analyze": "lighthouse --only-categories=performance --chrome-flags='--headless'"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -18,9 +23,12 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@lhci/cli": "^0.12.0",
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.4.5",
+    "lighthouse": "^11.0.0",
+    "puppeteer": "^21.0.0",
     "tailwindcss": "^4"
   }
 }
