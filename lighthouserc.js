@@ -3,8 +3,7 @@ module.exports = {
     collect: {
       // URLs to test - can be overridden by environment variables
       url: [
-        process.env.PRODUCTION_URL || 'https://your-website.com',
-        process.env.STAGING_URL || 'https://staging-your-website.com'
+        process.env.PRODUCTION_URL || 'https://webvitals.contentstackapps.com/'
       ].filter(Boolean),
       
       // Lighthouse collection settings

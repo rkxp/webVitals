@@ -66,13 +66,8 @@ async function autoDetectDeploymentUrl() {
     return await detectCloudflareUrl();
   }
   
-  // Fallback to configured URLs
-  const environment = process.env.GITHUB_EVENT_NAME;
-  if (environment === 'push' && process.env.GITHUB_REF === 'refs/heads/main') {
-    return process.env.PRODUCTION_URL;
-  } else {
-    return process.env.STAGING_URL || process.env.PRODUCTION_URL;
-  }
+  // Fallback to production URL
+  return process.env.PRODUCTION_URL || 'https://webvitals.contentstackapps.com/';
 }
 
 /**
@@ -82,7 +77,7 @@ async function detectVercelUrl() {
   console.log('🔺 Detecting Vercel deployment...');
   
   const vercelToken = process.env.VERCEL_TOKEN;
-  const vercelProject = process.env.VERCEL_PROJECT || process.env.GITHUB_REPOSITORY?.split('/')[1];
+  const vercelProject = process.env.VERCEL_PROJECT || 'webVitals';
   
   if (!vercelToken || !vercelProject) {
     console.log('⚠️ Vercel token or project not configured, using fallback URL');
@@ -195,7 +190,7 @@ async function detectCloudflareUrl() {
   
   const cfToken = process.env.CLOUDFLARE_API_TOKEN;
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const projectName = process.env.CF_PAGES_PROJECT || process.env.GITHUB_REPOSITORY?.split('/')[1];
+  const projectName = process.env.CF_PAGES_PROJECT || 'webVitals';
   
   if (!cfToken || !accountId || !projectName) {
     console.log('⚠️ Cloudflare credentials not configured, using fallback URL');

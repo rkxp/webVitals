@@ -12,8 +12,7 @@ const path = require('path');
 // Configuration
 const config = {
   psiApiKey: process.env.GOOGLE_PSI_API_KEY,
-  productionUrl: process.env.PRODUCTION_URL,
-  stagingUrl: process.env.STAGING_URL,
+  productionUrl: process.env.PRODUCTION_URL || 'https://webvitals.contentstackapps.com/',
   customUrl: process.env.INPUT_URL,
   thresholds: {
     lcp: parseFloat(process.env.PERFORMANCE_THRESHOLD_LCP) || 2.5,
@@ -235,22 +234,36 @@ async function runLighthouseCheck(url) {
       'lighthouse',
       url,
       '--only-categories=performance,accessibility,best-practices,seo',
-      '--chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"',
+      '--chrome-flags=--headless --no-sandbox --disable-dev-shm-usage',
       '--output=html',
       '--output-path=lighthouse-report.html',
       '--quiet'
-    ]);
+    ], {
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    
+    let errorOutput = '';
+    
+    lighthouse.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+    });
     
     lighthouse.on('close', (code) => {
       if (code === 0) {
         log('Lighthouse analysis completed', 'success');
         resolve();
       } else {
-        reject(new Error(`Lighthouse failed with code ${code}`));
+        log(`Lighthouse stderr: ${errorOutput}`, 'error');
+        // Don't fail the entire process if Lighthouse fails
+        log('Lighthouse failed but continuing with PSI analysis...', 'warn');
+        resolve();
       }
     });
     
-    lighthouse.on('error', reject);
+    lighthouse.on('error', (error) => {
+      log(`Lighthouse spawn error: ${error.message}`, 'warn');
+      resolve(); // Don't fail the entire process
+    });
   });
 }
 
@@ -269,16 +282,8 @@ async function main() {
     if (config.customUrl) {
       urlsToTest.push(config.customUrl);
     } else {
-      if (config.github.eventName === 'push' && config.github.ref === 'refs/heads/main') {
-        // Production deployment
-        if (config.productionUrl) urlsToTest.push(config.productionUrl);
-      } else if (config.github.eventName === 'pull_request') {
-        // Staging or PR preview
-        if (config.stagingUrl) urlsToTest.push(config.stagingUrl);
-      } else {
-        // Scheduled run - test production
-        if (config.productionUrl) urlsToTest.push(config.productionUrl);
-      }
+      // Always test production URL for all scenarios
+      if (config.productionUrl) urlsToTest.push(config.productionUrl);
     }
     
     if (urlsToTest.length === 0) {

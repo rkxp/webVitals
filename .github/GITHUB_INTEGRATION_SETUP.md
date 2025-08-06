@@ -51,12 +51,11 @@ Go to your GitHub repository → Settings → Secrets and variables → Actions 
 
 #### Required Variables:
 ```
-PRODUCTION_URL=https://your-production-website.com
+PRODUCTION_URL=https://webvitals.contentstackapps.com/
 ```
 
 #### Optional Variables:
 ```
-STAGING_URL=https://staging-your-website.com
 PERFORMANCE_THRESHOLD_LCP=2.5
 PERFORMANCE_THRESHOLD_CLS=0.1
 PERFORMANCE_THRESHOLD_INP=200
@@ -71,8 +70,7 @@ Create a `.env.example` file in your repository root:
 GOOGLE_PSI_API_KEY=your_api_key_here
 
 # Website URLs
-PRODUCTION_URL=https://your-website.com
-STAGING_URL=https://staging-your-website.com
+PRODUCTION_URL=https://webvitals.contentstackapps.com/
 
 # Performance Thresholds
 PERFORMANCE_THRESHOLD_LCP=2.5
@@ -155,7 +153,10 @@ The GitHub Actions workflow (`web-vitals-monitoring.yml`) will:
 ```bash
 # Set environment variables
 export GOOGLE_PSI_API_KEY="your_api_key"
-export PRODUCTION_URL="https://your-website.com"
+export PRODUCTION_URL="https://webvitals.contentstackapps.com/"
+
+# Setup monitoring dependencies (first time only)
+npm run setup:monitoring
 
 # Run monitoring script
 npm run monitor
@@ -163,14 +164,14 @@ npm run monitor
 # Run Lighthouse CI
 npm run lighthouse:ci
 
-# Run both performance tests
+# Run both performance tests (includes setup)
 npm run performance:test
 ```
 
 ### Analyze specific URL:
 ```bash
 # Set custom URL and run
-export INPUT_URL="https://specific-page.com"
+export INPUT_URL="https://webvitals.contentstackapps.com/specific-page"
 npm run monitor
 ```
 
@@ -190,7 +191,12 @@ npm run monitor
 
 ### Common Issues:
 
-#### 1. API Rate Limits
+#### 1. Package Lock Sync Issues
+- **Error**: `npm ci can only install packages when your package.json and package-lock.json are in sync`
+- **Solution**: The workflow automatically handles this with fallback to `npm install`
+- **Local Fix**: Run `npm install` to update package-lock.json, then commit both files
+
+#### 2. API Rate Limits
 - Google PSI API has rate limits (25,000 requests/day free tier)
 - Solution: Reduce monitoring frequency or upgrade API quota
 
