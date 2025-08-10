@@ -9,11 +9,10 @@ export default function LighthouseReports() {
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState(null);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('local'); // 'local' or 'github'
+  const [activeTab, setActiveTab] = useState('github'); // Only GitHub Actions reports
   const [syncingArtifacts, setSyncingArtifacts] = useState(new Set());
 
   useEffect(() => {
-    fetchLighthouseReports();
     fetchGithubReports();
   }, []);
 
@@ -183,169 +182,22 @@ export default function LighthouseReports() {
             Lighthouse Reports
           </h2>
         </div>
-        <button
-          onClick={() => {
-            fetchLighthouseReports();
-            fetchGithubReports();
-          }}
-          className="text-blue-600 hover:text-blue-700 transition-colors"
-          title="Refresh reports"
-        >
-          <TrendingUp className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-        <button
-          onClick={() => setActiveTab('local')}
-          className={`px-4 py-2 font-medium text-sm transition-colors ${
-            activeTab === 'local'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          <div className="flex items-center space-x-2">
-            <Monitor className="w-4 h-4" />
-            <span>Local Reports</span>
-            <span className="bg-gray-100 dark:bg-gray-700 text-xs px-2 py-1 rounded-full">
-              {reports.length}
-            </span>
-          </div>
-        </button>
-        <button
-          onClick={() => setActiveTab('github')}
-          className={`px-4 py-2 font-medium text-sm transition-colors ${
-            activeTab === 'github'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
             <GitBranch className="w-4 h-4" />
-            <span>GitHub Actions</span>
-            <span className="bg-gray-100 dark:bg-gray-700 text-xs px-2 py-1 rounded-full">
-              {githubReports.length}
-            </span>
+            <span>GitHub Actions Reports: {githubReports.length}</span>
           </div>
-        </button>
+          <button
+            onClick={fetchGithubReports}
+            className="text-blue-600 hover:text-blue-700 transition-colors"
+            title="Refresh GitHub reports"
+          >
+            <TrendingUp className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
-      {/* Tab Content */}
-      {activeTab === 'local' && (
-        <div className="space-y-4">
-          {reports.length === 0 ? (
-            <div className="text-center py-8">
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                No local Lighthouse reports found. Run a performance audit to generate reports.
-              </p>
-              <button
-                onClick={() => {
-                  window.open('/api/trigger-lighthouse', '_blank');
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Run Lighthouse Audit
-              </button>
-            </div>
-          ) : (
-            reports.map((report, index) => (
-          <div
-            key={index}
-            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-3">
-                <Monitor className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white">
-                    {report.url}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
-                    <Clock className="w-4 h-4 mr-1" />
-                    {formatTimestamp(report.timestamp)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <a
-                  href={report.htmlPath}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-700 transition-colors"
-                  title="View full report"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              </div>
-            </div>
-
-            {/* Performance Scores */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {Object.entries(report.categories || {}).map(([category, data]) => {
-                const score = Math.round(data.score * 100);
-                const Icon = getScoreIcon(score);
-                
-                return (
-                  <div
-                    key={category}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${getScoreColor(score)}`}
-                  >
-                    <CategoryIcon category={category} />
-                    <div>
-                      <p className="text-xs font-medium capitalize">
-                        {category.replace('-', ' ')}
-                      </p>
-                      <p className="text-sm font-bold">{score}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Core Web Vitals */}
-            {report.audits && (
-              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                  Core Web Vitals
-                </p>
-                <div className="grid grid-cols-3 gap-3 text-sm">
-                  {report.audits['largest-contentful-paint'] && (
-                    <div className="text-center">
-                      <p className="font-medium">LCP</p>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {Math.round(report.audits['largest-contentful-paint'].numericValue / 1000 * 10) / 10}s
-                      </p>
-                    </div>
-                  )}
-                  {report.audits['cumulative-layout-shift'] && (
-                    <div className="text-center">
-                      <p className="font-medium">CLS</p>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {Math.round(report.audits['cumulative-layout-shift'].numericValue * 1000) / 1000}
-                      </p>
-                    </div>
-                  )}
-                  {report.audits['interaction-to-next-paint'] && (
-                    <div className="text-center">
-                      <p className="font-medium">INP</p>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {Math.round(report.audits['interaction-to-next-paint'].numericValue)}ms
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* GitHub Actions Reports Tab */}
-      {activeTab === 'github' && (
+      {/* GitHub Actions Reports */}
         <div className="space-y-4">
           {githubReports.length === 0 ? (
             <div className="text-center py-8">
@@ -441,7 +293,6 @@ export default function LighthouseReports() {
             ))
           )}
         </div>
-      )}
     </div>
   );
 }
