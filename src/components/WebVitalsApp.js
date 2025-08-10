@@ -432,45 +432,7 @@ export default function WebVitalsApp() {
       
       <main id="main-content" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-label="Performance Dashboard Content">
         <div className="space-y-12">
-          {/* Status Bar */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0 text-sm">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-gray-400">
-                <span>Tracked URLs: {trackedUrls.length}</span>
-                <span>Last refresh: {formatTimeAgo(lastRefresh)}</span>
-                {trackedUrls.length > 0 && (
-                  <span className="hidden sm:inline">
-                    Next auto-refresh: {
-                      settings.autoRefreshEnabled === false 
-                        ? 'Disabled' 
-                        : nextAutoRefresh 
-                          ? formatTimeAgo(nextAutoRefresh)
-                          : 'Not scheduled'
-                    }
-                  </span>
-                )}
-              </div>
-              
-              {refreshProgress && (
-                <div className="text-sm">
-                  {refreshProgress.status === 'processing' && (
-                    <span className="flex items-center space-x-2">
-                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
-                      <span>Refreshing {refreshProgress.current}/{refreshProgress.total}</span>
-                    </span>
-                  )}
-                  {refreshProgress.status === 'completed' && (
-                    <span className="text-green-600 dark:text-green-400">✓ Completed: {refreshProgress.url}</span>
-                  )}
-                  {refreshProgress.status === 'error' && (
-                    <span className="text-destructive">
-                      ✗ Error: {refreshProgress.url}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+          
 
           {/* Primary Feature: Lighthouse Reports Dashboard */}
           <LighthouseReports />

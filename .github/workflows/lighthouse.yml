@@ -147,14 +147,53 @@ jobs:
             echo "📊 Reports will still be generated and uploaded for analysis"
           fi
           
+      - name: Debug and prepare Lighthouse artifacts
+        if: steps.changed-pages.outputs.skip != 'true' && always()
+        run: |
+          echo "🔍 Debugging: Checking what Lighthouse CI generated..."
+          echo "Current directory contents:"
+          ls -la
+          
+          echo "Lighthouse CI directory contents:"
+          if [ -d ".lighthouseci" ]; then
+            find .lighthouseci -type f -name "*.json" | head -10
+            ls -la .lighthouseci/
+          else
+            echo "❌ .lighthouseci directory not found"
+          fi
+          
+          echo "Creating summary even if Lighthouse failed..."
+          mkdir -p ./lighthouse-artifacts
+          
+          # Copy any generated reports
+          if [ -d ".lighthouseci" ]; then
+            cp -r .lighthouseci ./lighthouse-artifacts/ || echo "Could not copy .lighthouseci"
+          fi
+          
+          # Create a metadata file for debugging
+          cat > ./lighthouse-artifacts/workflow-metadata.json << EOF
+          {
+            "workflow_run_id": "${{ github.run_id }}",
+            "commit_sha": "${{ github.sha }}",
+            "branch": "${{ github.head_ref || github.ref_name }}",
+            "event_type": "${{ github.event_name }}",
+            "pr_number": "${{ github.event.number }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "lighthouse_exit_code": "${{ steps.lighthouse-ci.outputs.lighthouse_exit_code }}",
+            "urls_tested": "${{ steps.changed-pages.outputs.urls }}",
+            "triggered_by": "${{ github.actor }}"
+          }
+          EOF
+          
+          echo "Artifact contents prepared:"
+          find ./lighthouse-artifacts -type f | head -20
+          
       - name: Upload Lighthouse reports as artifacts
         if: steps.changed-pages.outputs.skip != 'true' && always()
         uses: actions/upload-artifact@v4
         with:
           name: lighthouse-reports-pr-${{ github.event.number || github.run_id }}
-          path: |
-            public/lighthouse-reports/
-            .lighthouseci/
+          path: lighthouse-artifacts/
           retention-days: 30
           
       - name: Post Lighthouse results summary
@@ -163,7 +202,7 @@ jobs:
           echo "Creating Lighthouse results summary..."
           
           # Create results summary JSON
-          cat > lighthouse-summary.json << 'EOF'
+          cat > lighthouse-summary.json << EOF
           {
             "workflow_run_id": "${{ github.run_id }}",
             "commit_sha": "${{ github.sha }}",
@@ -173,13 +212,15 @@ jobs:
             "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
             "changed_urls": "${{ steps.changed-pages.outputs.urls }}",
             "artifact_name": "lighthouse-reports-pr-${{ github.event.number || github.run_id }}",
-            "reports_path": "public/lighthouse-reports/",
+            "lighthouse_exit_code": "${{ steps.lighthouse-ci.outputs.lighthouse_exit_code }}",
+            "quality_gates_passed": ${{ steps.lighthouse-ci.outputs.lighthouse_exit_code == '0' }},
+            "reports_path": "lighthouse-artifacts/",
             "triggered_by": "${{ github.actor }}"
           }
           EOF
           
-          # Upload summary as separate artifact for easy access
           echo "Lighthouse summary created for dashboard integration"
+          echo "Exit code: ${{ steps.lighthouse-ci.outputs.lighthouse_exit_code }}"
           
       - name: Upload Lighthouse summary
         if: steps.changed-pages.outputs.skip != 'true' && always()
@@ -331,14 +372,53 @@ jobs:
             echo "📊 Reports will still be generated and uploaded for analysis"
           fi
           
+      - name: Debug and prepare full audit artifacts
+        if: always()
+        run: |
+          echo "🔍 Debugging: Checking what full Lighthouse CI generated..."
+          echo "Current directory contents:"
+          ls -la
+          
+          echo "Lighthouse CI directory contents:"
+          if [ -d ".lighthouseci" ]; then
+            find .lighthouseci -type f -name "*.json" | head -10
+            ls -la .lighthouseci/
+          else
+            echo "❌ .lighthouseci directory not found"
+          fi
+          
+          echo "Creating summary even if Lighthouse failed..."
+          mkdir -p ./lighthouse-artifacts-full
+          
+          # Copy any generated reports
+          if [ -d ".lighthouseci" ]; then
+            cp -r .lighthouseci ./lighthouse-artifacts-full/ || echo "Could not copy .lighthouseci"
+          fi
+          
+          # Create a metadata file for debugging
+          cat > ./lighthouse-artifacts-full/workflow-metadata.json << EOF
+          {
+            "workflow_run_id": "${{ github.run_id }}",
+            "commit_sha": "${{ github.sha }}",
+            "branch": "${{ github.head_ref || github.ref_name }}",
+            "event_type": "${{ github.event_name }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "lighthouse_exit_code": "${{ steps.lighthouse-ci-full.outputs.lighthouse_exit_code }}",
+            "custom_urls": "${{ github.event.inputs.urls }}",
+            "triggered_by": "${{ github.actor }}",
+            "audit_type": "full_site"
+          }
+          EOF
+          
+          echo "Full audit artifact contents prepared:"
+          find ./lighthouse-artifacts-full -type f | head -20
+          
       - name: Upload Lighthouse reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lighthouse-reports-full-${{ github.run_id }}
-          path: |
-            public/lighthouse-reports/
-            .lighthouseci/
+          path: lighthouse-artifacts-full/
           retention-days: 30
           
       - name: Fail job if full Lighthouse CI failed (after artifacts uploaded)

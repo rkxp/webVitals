@@ -34,6 +34,12 @@ module.exports = {
     upload: {
       // Use temporary public storage for GitHub Actions CI
       target: 'temporary-public-storage'
+    },
+    
+    // Also collect reports locally for artifact upload
+    collect: {
+      ...module.exports.ci.collect,
+      outputDir: './lighthouse-results'
     }
   }
 };
