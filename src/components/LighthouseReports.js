@@ -665,14 +665,15 @@ export default function LighthouseReports() {
                 </div>
 
                 {run.pr_number && (
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="mt-3 pt-3 border-t border-gray-700">
+                    <p className="text-sm text-gray-400">
                       Pull Request #{run.pr_number}
                     </p>
                   </div>
                 )}
-              </div>
-            ))
+                </div>
+              );
+            })
           )}
         </div>
       </div>
