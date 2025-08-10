@@ -19,19 +19,100 @@ export default function LighthouseReports() {
   const fetchGithubReports = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       // Fetch GitHub Actions Lighthouse reports
       const response = await fetch('/api/github-lighthouse-reports');
+      
       if (response.ok) {
         const data = await response.json();
         setGithubReports(data.reports || []);
-        setError(null);
+        
+        // Handle empty results
+        if (!data.reports || data.reports.length === 0) {
+          if (data.meta?.total_runs === 0) {
+            setError({
+              type: 'info',
+              title: 'No workflow runs found',
+              message: 'No Lighthouse CI workflows have been executed yet.',
+              help: 'Push code changes to trigger your first Lighthouse CI run.',
+              action: 'Try making a small change and pushing to your repository'
+            });
+          } else {
+            setError({
+              type: 'warning',
+              title: 'No reports with artifacts',
+              message: `Found ${data.meta.total_runs} workflow runs, but none have Lighthouse artifacts.`,
+              help: 'This may happen if workflows were skipped or failed before generating reports.',
+              action: 'Check your recent workflow runs in GitHub Actions'
+            });
+          }
+        }
       } else {
-        console.warn('GitHub reports not available (token may not be configured)');
-        setError('GitHub reports not available. Check GitHub token configuration.');
+        const errorData = await response.json();
+        
+        if (response.status === 401) {
+          setError({
+            type: 'error',
+            title: 'GitHub Token Required',
+            message: errorData.message || 'GitHub authentication failed',
+            help: errorData.help || 'Please configure your GitHub token in environment variables',
+            action: 'Set GITHUB_TOKEN in your .env.local file'
+          });
+        } else if (response.status === 403) {
+          setError({
+            type: 'error',
+            title: 'Permission Denied',
+            message: errorData.message || 'GitHub access forbidden',
+            help: errorData.help || 'Token lacks required permissions',
+            action: 'Ensure your GitHub token has "actions:read" permission'
+          });
+        } else if (response.status === 404) {
+          setError({
+            type: 'error',
+            title: 'Repository Not Found',
+            message: errorData.message || 'Repository or workflow not found',
+            help: errorData.help || 'Check repository configuration',
+            action: 'Verify GITHUB_REPOSITORY_OWNER and GITHUB_REPOSITORY_NAME'
+          });
+        } else if (response.status === 429) {
+          setError({
+            type: 'warning',
+            title: 'Rate Limit Exceeded',
+            message: errorData.message || 'Too many requests to GitHub API',
+            help: errorData.help || 'Please wait before retrying',
+            action: 'Try again in a few minutes'
+          });
+        } else {
+          setError({
+            type: 'error',
+            title: 'API Error',
+            message: errorData.message || 'Failed to fetch GitHub reports',
+            help: errorData.help || 'Unknown error occurred',
+            action: 'Check browser console for more details'
+          });
+        }
       }
     } catch (err) {
-      console.warn('GitHub reports fetch failed:', err.message);
-      setError('Failed to fetch GitHub reports: ' + err.message);
+      console.error('GitHub reports fetch failed:', err);
+      
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        setError({
+          type: 'error',
+          title: 'Network Error',
+          message: 'Unable to connect to the API',
+          help: 'Check your internet connection and server status',
+          action: 'Ensure the development server is running'
+        });
+      } else {
+        setError({
+          type: 'error',
+          title: 'Unexpected Error',
+          message: err.message || 'An unexpected error occurred',
+          help: 'This may be a temporary issue',
+          action: 'Try refreshing the page or check browser console'
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -174,39 +255,111 @@ export default function LighthouseReports() {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+      <div className="bg-gray-900 border border-gray-800 rounded-xl shadow-lg p-6">
         <div className="flex items-center space-x-3 mb-6">
-          <BarChart3 className="w-6 h-6 text-blue-600" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Lighthouse Reports
+          <BarChart3 className="w-6 h-6 text-blue-400" />
+          <h2 className="text-xl font-semibold text-white">
+            Performance Hub
           </h2>
         </div>
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-gray-600 dark:text-gray-400">Loading reports...</span>
+        <div className="text-center py-12">
+          <div className="relative">
+            <Loader className="w-10 h-10 animate-spin mx-auto mb-4 text-blue-400" />
+            <div className="absolute inset-0 bg-blue-400/20 rounded-full animate-pulse"></div>
+          </div>
+          <p className="text-gray-300 mb-2 text-lg font-medium">
+            Loading Lighthouse Reports
+          </p>
+          <p className="text-gray-400 text-sm">
+            Fetching performance data from GitHub Actions...
+          </p>
+          <div className="mt-6 flex justify-center">
+            <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   if (error) {
+    const isErrorObject = typeof error === 'object';
+    const errorType = isErrorObject ? error.type : 'error';
+    const errorTitle = isErrorObject ? error.title : 'Error Loading Reports';
+    const errorMessage = isErrorObject ? error.message : error;
+    const errorHelp = isErrorObject ? error.help : null;
+    const errorAction = isErrorObject ? error.action : null;
+    
+    const iconColors = {
+      error: 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400',
+      warning: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400',
+      info: 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
+    };
+    
+    const borderColors = {
+      error: 'border-red-200 dark:border-red-800',
+      warning: 'border-yellow-200 dark:border-yellow-800',
+      info: 'border-blue-200 dark:border-blue-800'
+    };
+    
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+      <div className={`bg-gray-900 border ${borderColors[errorType] || borderColors.error} rounded-xl shadow-lg p-6`}>
         <div className="flex items-center space-x-3 mb-6">
-          <BarChart3 className="w-6 h-6 text-blue-600" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Lighthouse Reports
-          </h2>
+          <div className={`p-3 rounded-full ${iconColors[errorType] || iconColors.error}`}>
+            {errorType === 'info' ? (
+              <HelpCircle className="h-6 w-6" />
+            ) : errorType === 'warning' ? (
+              <AlertTriangle className="h-6 w-6" />
+            ) : (
+              <AlertTriangle className="h-6 w-6" />
+            )}
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-white">
+              {errorTitle}
+            </h2>
+          </div>
         </div>
-        <div className="text-center py-8">
-          <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
-          <button
-            onClick={fetchLighthouseReports}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Retry
-          </button>
+        <div className="space-y-4">
+          <p className="text-gray-300 mb-4">{errorMessage}</p>
+          
+          {errorHelp && (
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+              <p className="text-gray-400 text-sm mb-2">
+                <strong>Help:</strong> {errorHelp}
+              </p>
+              {errorAction && (
+                <p className="text-blue-400 text-sm">
+                  <strong>Action:</strong> {errorAction}
+                </p>
+              )}
+            </div>
+          )}
+          
+          <div className="flex space-x-3">
+            <button
+              onClick={fetchGithubReports}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
+            >
+              <TrendingUp className="w-4 h-4" />
+              <span>Retry</span>
+            </button>
+            
+            {errorType === 'error' && (
+              <a
+                href="/.github/GITHUB_INTEGRATION_SETUP.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors flex items-center space-x-2"
+              >
+                <HelpCircle className="w-4 h-4" />
+                <span>Setup Guide</span>
+              </a>
+            )}
+          </div>
         </div>
       </div>
     );

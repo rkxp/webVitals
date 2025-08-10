@@ -16,8 +16,9 @@ This guide will help you set up automated Web Vitals monitoring that runs on eve
 
 1. **Google PageSpeed Insights API Key**
 2. **GitHub Repository with Actions enabled**
-3. **Website URLs to monitor** (production and/or staging)
-4. **Optional**: Slack webhook for notifications
+3. **GitHub Personal Access Token** (for Lighthouse CI integration)
+4. **Website URLs to monitor** (production and/or staging)
+5. **Optional**: Slack webhook for notifications
 
 ## ⚙️ Setup Instructions
 
@@ -71,6 +72,11 @@ GOOGLE_PSI_API_KEY=your_api_key_here
 
 # Website URLs
 PRODUCTION_URL=https://webvitals.contentstackapps.com/
+
+# GitHub Integration (Required for Lighthouse CI Dashboard)
+GITHUB_TOKEN=your_github_personal_access_token
+GITHUB_REPOSITORY_OWNER=your_github_username
+GITHUB_REPOSITORY_NAME=your_repository_name
 
 # Performance Thresholds
 PERFORMANCE_THRESHOLD_LCP=2.5

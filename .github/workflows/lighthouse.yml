@@ -80,41 +80,101 @@ jobs:
         id: changed-pages
         run: |
           # Get changed URLs using our custom script
-          echo "Running change detection script..."
-          URLS=$(SKIP_BUILD=1 ./scripts/get-changed-pages.sh main)
+          echo "🔍 Running change detection script..."
           
-          if [ -z "$URLS" ]; then
-            echo "No page-related changes detected"
+          # Check if script exists and is executable
+          if [ ! -f "./scripts/get-changed-pages.sh" ]; then
+            echo "❌ get-changed-pages.sh script not found"
             echo "skip=true" >> $GITHUB_OUTPUT
+            echo "error=script_missing" >> $GITHUB_OUTPUT
             exit 0
           fi
           
-          echo "Detected URLs: $URLS"
-          echo "urls=$URLS" >> $GITHUB_OUTPUT
+          if [ ! -x "./scripts/get-changed-pages.sh" ]; then
+            echo "⚠️ Making get-changed-pages.sh executable"
+            chmod +x ./scripts/get-changed-pages.sh
+          fi
+          
+          # Run script with error handling
+          set +e  # Don't exit on error
+          URLS=$(SKIP_BUILD=1 ./scripts/get-changed-pages.sh main 2>&1)
+          SCRIPT_EXIT_CODE=$?
+          set -e  # Re-enable exit on error
+          
+          if [ $SCRIPT_EXIT_CODE -ne 0 ]; then
+            echo "❌ Change detection script failed with exit code: $SCRIPT_EXIT_CODE"
+            echo "Script output: $URLS"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "error=script_failed" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Filter out any error messages that might be in the output
+          CLEAN_URLS=$(echo "$URLS" | grep -E '^https?://' || echo "")
+          
+          if [ -z "$CLEAN_URLS" ]; then
+            echo "📝 No page-related changes detected"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "reason=no_changes" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "✅ Detected URLs: $CLEAN_URLS"
+          echo "urls=$CLEAN_URLS" >> $GITHUB_OUTPUT
           echo "skip=false" >> $GITHUB_OUTPUT
           
           # Count URLs for summary
-          URL_COUNT=$(echo "$URLS" | wc -w)
+          URL_COUNT=$(echo "$CLEAN_URLS" | wc -w)
           echo "url_count=$URL_COUNT" >> $GITHUB_OUTPUT
+          echo "📊 Total URLs to test: $URL_COUNT"
           
       - name: Start Next.js development server
         if: steps.changed-pages.outputs.skip != 'true'
         run: |
-          npm run dev &
+          echo "🚀 Starting Next.js development server..."
           
-          # Wait for server to be ready
-          echo "Waiting for development server..."
-          for i in {1..30}; do
-            if curl -s $LIGHTHOUSE_BASE_URL > /dev/null; then
-              echo "Server is ready!"
+          # Start server in background
+          npm run dev > server.log 2>&1 &
+          SERVER_PID=$!
+          echo "Server PID: $SERVER_PID"
+          
+          # Wait for server to be ready with better error handling
+          echo "⏳ Waiting for development server at $LIGHTHOUSE_BASE_URL..."
+          READY=false
+          
+          for i in {1..60}; do
+            if curl -s --max-time 5 $LIGHTHOUSE_BASE_URL > /dev/null 2>&1; then
+              echo "✅ Server is ready!"
+              READY=true
               break
             fi
-            if [ $i -eq 30 ]; then
-              echo "Server failed to start within 30 seconds"
+            
+            # Check if server process is still running
+            if ! kill -0 $SERVER_PID 2>/dev/null; then
+              echo "❌ Server process died unexpectedly"
+              echo "Server logs:"
+              cat server.log || echo "No logs available"
               exit 1
             fi
+            
+            if [ $i -eq 60 ]; then
+              echo "❌ Server failed to start within 60 seconds"
+              echo "Server logs:"
+              cat server.log || echo "No logs available"
+              echo "Server process status: $(ps aux | grep $SERVER_PID || echo 'Process not found')"
+              exit 1
+            fi
+            
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "⏳ Still waiting... (${i}/60 seconds)"
+            fi
+            
             sleep 1
           done
+          
+          if [ "$READY" = true ]; then
+            echo "🌐 Server is responding at $LIGHTHOUSE_BASE_URL"
+          fi
           
       - name: Run Lighthouse CI
         id: lighthouse-ci
@@ -284,8 +344,26 @@ jobs:
       - name: Skip notification
         if: steps.changed-pages.outputs.skip == 'true'
         run: |
-          echo "✅ No page-related files were changed in this PR"
-          echo "Lighthouse CI skipped to save resources"
+          echo "⏭️ Lighthouse CI Skipped"
+          
+          if [ "${{ steps.changed-pages.outputs.error }}" = "script_missing" ]; then
+            echo "❌ Change detection script not found"
+            echo "Please ensure scripts/get-changed-pages.sh exists and is committed"
+          elif [ "${{ steps.changed-pages.outputs.error }}" = "script_failed" ]; then
+            echo "❌ Change detection script failed"
+            echo "Check the script for errors or permissions issues"
+          elif [ "${{ steps.changed-pages.outputs.reason }}" = "no_changes" ]; then
+            echo "✅ No page-related files were changed in this PR"
+            echo "Lighthouse CI skipped to save resources"
+          else
+            echo "ℹ️ Lighthouse CI was skipped"
+          fi
+          
+          echo ""
+          echo "📋 What triggers Lighthouse CI:"
+          echo "  • Changes to src/, pages/, app/, components/"
+          echo "  • Changes to package.json, next.config.*"
+          echo "  • Changes to lighthouse configuration files"
 
   # Job for scheduled runs - test all pages
   lighthouse-full:

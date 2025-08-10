@@ -6,6 +6,21 @@ export async function GET(request) {
     const page = parseInt(searchParams.get('page') || '1');
     const per_page = parseInt(searchParams.get('per_page') || '10');
     
+    // Validate parameters
+    if (page < 1 || page > 100) {
+      return NextResponse.json({
+        error: 'Invalid page parameter',
+        message: 'Page must be between 1 and 100'
+      }, { status: 400 });
+    }
+    
+    if (per_page < 1 || per_page > 100) {
+      return NextResponse.json({
+        error: 'Invalid per_page parameter',
+        message: 'per_page must be between 1 and 100'
+      }, { status: 400 });
+    }
+    
     // GitHub repository information
     const owner = process.env.GITHUB_REPOSITORY_OWNER || 'rkxp';
     const repo = process.env.GITHUB_REPOSITORY_NAME || 'webVitals';
@@ -14,7 +29,8 @@ export async function GET(request) {
     if (!token) {
       return NextResponse.json({
         error: 'GitHub token not configured',
-        message: 'Please set GITHUB_TOKEN environment variable to access workflow runs'
+        message: 'Please set GITHUB_TOKEN environment variable to access workflow runs',
+        help: 'Check GITHUB_INTEGRATION_SETUP.md for setup instructions'
       }, { status: 401 });
     }
     
@@ -32,7 +48,33 @@ export async function GET(request) {
     );
     
     if (!workflowRunsResponse.ok) {
-      throw new Error(`GitHub API error: ${workflowRunsResponse.status} ${workflowRunsResponse.statusText}`);
+      const errorBody = await workflowRunsResponse.text();
+      
+      if (workflowRunsResponse.status === 401) {
+        return NextResponse.json({
+          error: 'GitHub authentication failed',
+          message: 'Invalid or expired GitHub token',
+          help: 'Please check your GITHUB_TOKEN environment variable'
+        }, { status: 401 });
+      }
+      
+      if (workflowRunsResponse.status === 403) {
+        return NextResponse.json({
+          error: 'GitHub access forbidden',
+          message: 'Token lacks required permissions for workflow access',
+          help: 'Ensure token has "actions:read" permission'
+        }, { status: 403 });
+      }
+      
+      if (workflowRunsResponse.status === 404) {
+        return NextResponse.json({
+          error: 'Repository or workflow not found',
+          message: `Repository ${owner}/${repo} or lighthouse.yml workflow not found`,
+          help: 'Check repository name and workflow file exists'
+        }, { status: 404 });
+      }
+      
+      throw new Error(`GitHub API error: ${workflowRunsResponse.status} ${workflowRunsResponse.statusText} - ${errorBody}`);
     }
     
     const workflowRuns = await workflowRunsResponse.json();
@@ -125,25 +167,47 @@ export async function GET(request) {
       pagination: {
         page,
         per_page,
-        total_count: workflowRuns.total_count,
+        total_count: workflowRuns.total_count || 0,
         has_next: reports.length === per_page
       },
       repository: {
         owner,
         repo,
         workflow: 'lighthouse.yml'
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        total_runs: workflowRuns.total_count || 0,
+        runs_with_artifacts: reports.length
       }
     });
     
   } catch (error) {
     console.error('Error fetching GitHub Lighthouse reports:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to fetch GitHub Lighthouse reports',
-        details: error.message 
-      },
-      { status: 500 }
-    );
+    
+    // Network/timeout errors
+    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+      return NextResponse.json({
+        error: 'Network connection failed',
+        message: 'Unable to connect to GitHub API',
+        help: 'Check internet connection and GitHub API status'
+      }, { status: 503 });
+    }
+    
+    // Rate limiting
+    if (error.message.includes('rate limit')) {
+      return NextResponse.json({
+        error: 'GitHub API rate limit exceeded',
+        message: 'Too many requests to GitHub API',
+        help: 'Please wait and try again later'
+      }, { status: 429 });
+    }
+    
+    return NextResponse.json({
+      error: 'Failed to fetch GitHub Lighthouse reports',
+      message: error.message || 'Unknown error occurred',
+      help: 'Check server logs for more details'
+    }, { status: 500 });
   }
 }
 
