@@ -411,7 +411,7 @@ export default function WebVitalsApp() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-black flex flex-col">
       <Header 
         onOpenSettings={handleOpenSettings} 
         trackedUrls={trackedUrls}

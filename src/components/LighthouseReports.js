@@ -188,35 +188,35 @@ export default function LighthouseReports() {
 
   return (
     <div className="space-y-8">
-      {/* Modern Hero Section */}
-      <div className="relative bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 rounded-3xl shadow-2xl overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-black bg-opacity-10"></div>
-        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+      {/* Apple-Style Dark Hero Section */}
+      <div className="relative bg-gray-900 rounded-3xl shadow-2xl overflow-hidden border border-gray-800">
+        {/* Subtle Background Pattern */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-800/30 to-gray-900/30"></div>
+        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
         
         <div className="relative p-8 md:p-12">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             {/* Hero Content */}
             <div className="flex items-start space-x-4">
-              <div className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-2xl">
-                <Rocket className="w-10 h-10 text-white" />
+              <div className="bg-gray-800 border border-gray-700 p-4 rounded-2xl shadow-lg">
+                <Rocket className="w-10 h-10 text-blue-400" />
               </div>
               <div>
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
                   Performance Hub
                 </h1>
-                <p className="text-purple-100 text-lg max-w-2xl leading-relaxed">
+                <p className="text-gray-300 text-lg max-w-2xl leading-relaxed font-light">
                   Real-time Lighthouse CI monitoring powered by GitHub Actions. 
                   Track performance, accessibility, and SEO across your team.
                 </p>
               </div>
             </div>
             
-            {/* Action Button */}
+            {/* Apple-Style Action Button */}
             <div className="flex-shrink-0">
               <button
                 onClick={fetchGithubReports}
-                className="bg-white text-purple-600 px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-3"
+                className="bg-blue-500 hover:bg-blue-400 text-white px-6 py-3 rounded-2xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-3 border border-blue-400/20"
                 title="Refresh reports"
               >
                 <TrendingUp className="w-5 h-5" />
@@ -225,110 +225,110 @@ export default function LighthouseReports() {
             </div>
           </div>
 
-          {/* Modern Performance Cards */}
+          {/* Apple-Style Performance Cards */}
           {overallMetrics ? (
             <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Performance Card */}
-              <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-6 border border-white border-opacity-30 hover:bg-opacity-100 transition-all duration-300">
+              <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:bg-gray-750 transition-all duration-300 shadow-lg">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="bg-gradient-to-br from-orange-400 to-red-500 p-3 rounded-xl">
-                    <Zap className="w-6 h-6 text-white" />
+                  <div className="bg-orange-500/20 border border-orange-500/30 p-3 rounded-xl">
+                    <Zap className="w-6 h-6 text-orange-400" />
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    overallMetrics.averagePerformance >= 90 ? 'bg-green-100 text-green-700' :
-                    overallMetrics.averagePerformance >= 50 ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-red-100 text-red-700'
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    overallMetrics.averagePerformance >= 90 ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                    overallMetrics.averagePerformance >= 50 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                    'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}>
                     {overallMetrics.averagePerformance >= 90 ? 'Great' : overallMetrics.averagePerformance >= 50 ? 'Good' : 'Poor'}
                   </span>
                 </div>
-                <h3 className="text-gray-600 font-medium mb-1">Performance</h3>
-                <p className="text-3xl font-bold text-gray-900">{overallMetrics.averagePerformance}</p>
+                <h3 className="text-gray-400 font-medium mb-1">Performance</h3>
+                <p className="text-3xl font-bold text-white">{overallMetrics.averagePerformance}</p>
               </div>
 
               {/* Accessibility Card */}
-              <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-6 border border-white border-opacity-30 hover:bg-opacity-100 transition-all duration-300">
+              <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:bg-gray-750 transition-all duration-300 shadow-lg">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="bg-gradient-to-br from-blue-400 to-indigo-500 p-3 rounded-xl">
-                    <Accessibility className="w-6 h-6 text-white" />
+                  <div className="bg-blue-500/20 border border-blue-500/30 p-3 rounded-xl">
+                    <Accessibility className="w-6 h-6 text-blue-400" />
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    overallMetrics.averageAccessibility >= 90 ? 'bg-green-100 text-green-700' :
-                    overallMetrics.averageAccessibility >= 50 ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-red-100 text-red-700'
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    overallMetrics.averageAccessibility >= 90 ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                    overallMetrics.averageAccessibility >= 50 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                    'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}>
                     {overallMetrics.averageAccessibility >= 90 ? 'Great' : overallMetrics.averageAccessibility >= 50 ? 'Good' : 'Poor'}
                   </span>
                 </div>
-                <h3 className="text-gray-600 font-medium mb-1">Accessibility</h3>
-                <p className="text-3xl font-bold text-gray-900">{overallMetrics.averageAccessibility}</p>
+                <h3 className="text-gray-400 font-medium mb-1">Accessibility</h3>
+                <p className="text-3xl font-bold text-white">{overallMetrics.averageAccessibility}</p>
               </div>
 
               {/* Best Practices Card */}
-              <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-6 border border-white border-opacity-30 hover:bg-opacity-100 transition-all duration-300">
+              <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:bg-gray-750 transition-all duration-300 shadow-lg">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="bg-gradient-to-br from-green-400 to-emerald-500 p-3 rounded-xl">
-                    <CheckCircle className="w-6 h-6 text-white" />
+                  <div className="bg-green-500/20 border border-green-500/30 p-3 rounded-xl">
+                    <CheckCircle className="w-6 h-6 text-green-400" />
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    overallMetrics.averageBestPractices >= 90 ? 'bg-green-100 text-green-700' :
-                    overallMetrics.averageBestPractices >= 50 ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-red-100 text-red-700'
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    overallMetrics.averageBestPractices >= 90 ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                    overallMetrics.averageBestPractices >= 50 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                    'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}>
                     {overallMetrics.averageBestPractices >= 90 ? 'Great' : overallMetrics.averageBestPractices >= 50 ? 'Good' : 'Poor'}
                   </span>
                 </div>
-                <h3 className="text-gray-600 font-medium mb-1">Best Practices</h3>
-                <p className="text-3xl font-bold text-gray-900">{overallMetrics.averageBestPractices}</p>
+                <h3 className="text-gray-400 font-medium mb-1">Best Practices</h3>
+                <p className="text-3xl font-bold text-white">{overallMetrics.averageBestPractices}</p>
               </div>
 
               {/* SEO Card */}
-              <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-6 border border-white border-opacity-30 hover:bg-opacity-100 transition-all duration-300">
+              <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:bg-gray-750 transition-all duration-300 shadow-lg">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="bg-gradient-to-br from-purple-400 to-pink-500 p-3 rounded-xl">
-                    <Globe className="w-6 h-6 text-white" />
+                  <div className="bg-purple-500/20 border border-purple-500/30 p-3 rounded-xl">
+                    <Globe className="w-6 h-6 text-purple-400" />
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    overallMetrics.averageSEO >= 90 ? 'bg-green-100 text-green-700' :
-                    overallMetrics.averageSEO >= 50 ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-red-100 text-red-700'
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    overallMetrics.averageSEO >= 90 ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                    overallMetrics.averageSEO >= 50 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                    'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}>
                     {overallMetrics.averageSEO >= 90 ? 'Great' : overallMetrics.averageSEO >= 50 ? 'Good' : 'Poor'}
                   </span>
                 </div>
-                <h3 className="text-gray-600 font-medium mb-1">SEO</h3>
-                <p className="text-3xl font-bold text-gray-900">{overallMetrics.averageSEO}</p>
+                <h3 className="text-gray-400 font-medium mb-1">SEO</h3>
+                <p className="text-3xl font-bold text-white">{overallMetrics.averageSEO}</p>
               </div>
             </div>
           ) : (
-            <div className="mt-8 bg-white bg-opacity-60 backdrop-blur-sm rounded-2xl p-8 text-center border border-white border-opacity-40">
-              <div className="bg-gradient-to-br from-indigo-400 to-purple-500 p-4 rounded-2xl w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-                <Target className="w-10 h-10 text-white" />
+            <div className="mt-8 bg-gray-800 border border-gray-700 rounded-2xl p-8 text-center">
+              <div className="bg-gray-700 border border-gray-600 p-4 rounded-2xl w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                <Target className="w-10 h-10 text-blue-400" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">
                 Ready to Monitor Performance
               </h3>
-              <p className="text-purple-100 text-base leading-relaxed max-w-md mx-auto">
+              <p className="text-gray-300 text-base leading-relaxed max-w-md mx-auto">
                 Push code changes to trigger automated Lighthouse CI and see your team's performance metrics
               </p>
             </div>
           )}
 
-          {/* Enhanced Stats Bar */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-8 text-white">
-            <div className="flex items-center space-x-3 bg-white bg-opacity-20 px-4 py-2 rounded-full backdrop-blur-sm">
-              <GitBranch className="w-5 h-5" />
-              <span className="font-semibold">{githubReports.length} Workflow Runs</span>
+          {/* Apple-Style Stats Bar */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+            <div className="flex items-center space-x-3 bg-gray-800/60 border border-gray-700/60 px-4 py-2 rounded-full backdrop-blur-sm">
+              <GitBranch className="w-5 h-5 text-gray-300" />
+              <span className="font-medium text-gray-300">{githubReports.length} Workflow Runs</span>
             </div>
             {overallMetrics && (
               <>
-                <div className="flex items-center space-x-3 bg-white bg-opacity-20 px-4 py-2 rounded-full backdrop-blur-sm">
-                  <BarChart3 className="w-5 h-5" />
-                  <span className="font-semibold">{overallMetrics.totalReports} Reports</span>
+                <div className="flex items-center space-x-3 bg-gray-800/60 border border-gray-700/60 px-4 py-2 rounded-full backdrop-blur-sm">
+                  <BarChart3 className="w-5 h-5 text-gray-300" />
+                  <span className="font-medium text-gray-300">{overallMetrics.totalReports} Reports</span>
                 </div>
-                <div className="flex items-center space-x-3 bg-white bg-opacity-20 px-4 py-2 rounded-full backdrop-blur-sm">
-                  <Award className="w-5 h-5" />
-                  <span className="font-semibold">{overallMetrics.recentRuns} Recent</span>
+                <div className="flex items-center space-x-3 bg-gray-800/60 border border-gray-700/60 px-4 py-2 rounded-full backdrop-blur-sm">
+                  <Award className="w-5 h-5 text-gray-300" />
+                  <span className="font-medium text-gray-300">{overallMetrics.recentRuns} Recent</span>
                 </div>
               </>
             )}
@@ -336,18 +336,18 @@ export default function LighthouseReports() {
         </div>
       </div>
 
-      {/* Clean Reports Section */}
-      <div className="bg-white rounded-3xl shadow-xl border border-gray-100">
-        <div className="p-8 border-b border-gray-100">
+      {/* Apple-Style Reports Section */}
+      <div className="bg-gray-900 border border-gray-800 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="p-8 border-b border-gray-800">
           <div className="flex items-center space-x-3 mb-2">
-            <div className="bg-gradient-to-br from-slate-600 to-gray-700 p-3 rounded-xl">
-              <FileText className="w-6 h-6 text-white" />
+            <div className="bg-gray-800 border border-gray-700 p-3 rounded-xl">
+              <FileText className="w-6 h-6 text-gray-300" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-white tracking-tight">
                 Recent Reports
               </h2>
-              <p className="text-gray-500 text-base">
+              <p className="text-gray-400 text-base font-light">
                 Latest Lighthouse audits from your team's GitHub Actions
               </p>
             </div>
@@ -358,17 +358,17 @@ export default function LighthouseReports() {
         <div className="p-8">
           {githubReports.length === 0 ? (
             <div className="text-center py-16">
-              <div className="bg-gradient-to-br from-gray-100 to-gray-200 p-6 rounded-3xl w-24 h-24 mx-auto mb-6 flex items-center justify-center">
-                <GitBranch className="w-12 h-12 text-gray-500" />
+              <div className="bg-gray-800 border border-gray-700 p-6 rounded-3xl w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                <GitBranch className="w-12 h-12 text-gray-400" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
+              <h3 className="text-xl font-bold text-white mb-3">
                 No Reports Yet
               </h3>
-              <p className="text-gray-600 mb-4 text-base leading-relaxed max-w-md mx-auto">
+              <p className="text-gray-400 mb-4 text-base leading-relaxed max-w-md mx-auto">
                 GitHub Actions Lighthouse reports will appear here when your team pushes code changes.
               </p>
-              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 max-w-lg mx-auto">
-                <p className="text-blue-800 text-sm">
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 max-w-lg mx-auto">
+                <p className="text-blue-400 text-sm">
                   💡 <strong>Tip:</strong> Make sure your GitHub token is configured and workflows are running
                 </p>
               </div>

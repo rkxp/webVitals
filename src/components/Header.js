@@ -299,10 +299,10 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
                   <Zap className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground tracking-tight truncate">
+                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-white tracking-tight truncate">
                     Lighthouse Performance Dashboard
                   </h1>
-                  <p className="text-xs text-muted-foreground hidden sm:block truncate">
+                  <p className="text-xs text-gray-400 hidden sm:block truncate">
                     Automated CI performance monitoring
                   </p>
                 </div>

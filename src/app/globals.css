@@ -326,3 +326,12 @@ p, span, div {
   transition-duration: 300ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Apple-style Dark Mode Colors */
+.bg-gray-750 {
+  background-color: rgb(55 65 81);
+}
+
+.hover\:bg-gray-750:hover {
+  background-color: rgb(55 65 81);
+}
