@@ -34,11 +34,6 @@ module.exports = {
     upload: {
       // For GitHub Actions, just store results temporarily without GitHub status integration
       target: 'temporary-public-storage'
-    },
-    
-    wizard: {
-      // Lighthouse CI wizard settings
-      preset: 'ci'
     }
   }
 };
