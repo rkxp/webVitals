@@ -229,9 +229,7 @@ p, span, div {
   @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
 }
 
-.metric-card {
-  @apply bg-card text-card-foreground border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow;
-}
+
 
 .btn-primary {
   @apply bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md transition-colors;

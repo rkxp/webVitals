@@ -425,9 +425,9 @@ export default function WebVitalsApp() {
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="space-y-12">
           {/* Status Bar */}
-          <div className="metric-card p-4">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0 text-sm">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-gray-400">
                 <span>Tracked URLs: {trackedUrls.length}</span>
                 <span>Last refresh: {formatTimeAgo(lastRefresh)}</span>
                 {trackedUrls.length > 0 && (
