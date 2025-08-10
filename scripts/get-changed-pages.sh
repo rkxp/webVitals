@@ -150,7 +150,13 @@ if [ -d ".next/server" ]; then
         
         if [ -n "$APP_ROUTES" ]; then
             while IFS= read -r route; do
-                if [ -n "$route" ] && [ "$route" != "/api" ]; then
+                # Filter out internal Next.js routes and API routes
+                if [ -n "$route" ] && [[ "$route" != "/api"* ]] && [[ "$route" != "/_"* ]] && [[ "$route" != *"/route" ]] && [[ "$route" != *"/favicon.ico"* ]]; then
+                    # Convert /page to / (root route)
+                    if [ "$route" = "/page" ]; then
+                        route="/"
+                    fi
+                    
                     # Replace dynamic routes
                     replaced_routes=$(replace_dynamic_routes "$route")
                     while IFS= read -r final_route; do
@@ -174,7 +180,8 @@ if [ -d ".next/server" ]; then
         
         if [ -n "$PAGE_ROUTES" ]; then
             while IFS= read -r route; do
-                if [ -n "$route" ] && [[ "$route" != "/api/"* ]] && [[ "$route" != "/_"* ]]; then
+                # Filter out internal Next.js routes, API routes, and error pages
+                if [ -n "$route" ] && [[ "$route" != "/api/"* ]] && [[ "$route" != "/_"* ]] && [[ "$route" != "/404" ]] && [[ "$route" != "/500" ]]; then
                     # Replace dynamic routes
                     replaced_routes=$(replace_dynamic_routes "$route")
                     while IFS= read -r final_route; do
