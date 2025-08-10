@@ -483,7 +483,10 @@ export default function LighthouseReports() {
                 {/* Enhanced Lighthouse Reports Section */}
                 <div className="space-y-3">
                   {run.artifacts
-                    .filter(artifact => artifact.name.includes('lighthouse-reports-'))
+                    .filter(artifact => 
+                      artifact.name.includes('lighthouse-reports-') || 
+                      artifact.name.includes('lighthouse-summary-')
+                    )
                     .map(artifact => {
                       const reportKey = `${run.run_id}-${artifact.id}`;
                       const isExpanded = expandedReports.has(reportKey);
@@ -497,9 +500,16 @@ export default function LighthouseReports() {
                                 <BarChart3 className="w-5 h-5 text-blue-400" />
                               </div>
                               <div>
-                                <p className="font-medium text-white text-base">Lighthouse Reports</p>
+                                <p className="font-medium text-white text-base">
+                                  {artifact.name.includes('lighthouse-reports-') ? 'Lighthouse Reports' : 'Lighthouse Summary'}
+                                </p>
                                 <p className="text-sm text-gray-400">
-                                  {reports.length > 0 ? `${reports.length} URLs tested` : 'Click to view reports'}
+                                  {artifact.name.includes('lighthouse-reports-') 
+                                    ? (reports.length > 0 ? `${reports.length} URLs tested` : 'Click to view reports')
+                                    : (artifact.name.includes('lighthouse-summary-') 
+                                      ? 'Workflow summary and metadata' 
+                                      : 'Click to view details')
+                                  }
                                 </p>
                               </div>
                             </div>
@@ -531,8 +541,30 @@ export default function LighthouseReports() {
                             <div className="p-6 border-t border-gray-700 bg-gray-900">
                               {reports.length === 0 ? (
                                 <div className="text-center py-8">
-                                  <Loader className="w-8 h-8 animate-spin mx-auto mb-3 text-blue-400" />
-                                  <p className="text-gray-400">Loading Lighthouse reports...</p>
+                                  {artifact.name.includes('lighthouse-summary-') ? (
+                                    <div>
+                                      <div className="bg-gray-800 border border-gray-700 p-4 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                                        <FileText className="w-8 h-8 text-blue-400" />
+                                      </div>
+                                      <h4 className="text-white font-medium mb-2">Workflow Summary</h4>
+                                      <p className="text-gray-400 mb-4">
+                                        This workflow run was skipped or did not generate detailed Lighthouse reports.
+                                      </p>
+                                      <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 max-w-md mx-auto">
+                                        <h5 className="text-white font-medium mb-2">Possible Reasons:</h5>
+                                        <ul className="text-sm text-gray-400 space-y-1 text-left">
+                                          <li>• No page-related changes detected</li>
+                                          <li>• Workflow was cancelled or failed early</li>
+                                          <li>• Only configuration files were modified</li>
+                                        </ul>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      <Loader className="w-8 h-8 animate-spin mx-auto mb-3 text-blue-400" />
+                                      <p className="text-gray-400">Loading Lighthouse reports...</p>
+                                    </div>
+                                  )}
                                 </div>
                               ) : (
                                 <div className="space-y-6">
