@@ -1,0 +1,297 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'pages/**'
+      - 'app/**'
+      - 'components/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'next.config.*'
+      - 'lighthouserc.js'
+      - 'dynamic-routes-map.json'
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: 'Custom URLs to test (space-separated)'
+        required: false
+        default: ''
+      skip_build:
+        description: 'Skip Next.js build step'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  # Base URL for Lighthouse testing
+  LIGHTHOUSE_BASE_URL: ${{ vars.LIGHTHOUSE_BASE_URL || 'http://localhost:3000' }}
+
+jobs:
+  # Job for Pull Request - test only changed pages
+  lighthouse-pr:
+    if: github.event_name == 'pull_request'
+    name: Lighthouse CI (Changed Pages)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for git diff
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          
+      - name: Install Node.js dependencies
+        run: npm ci
+        
+      - name: Detect changed pages
+        id: changed-pages
+        run: |
+          # Get changed URLs using our custom script
+          URLS=$(./scripts/get-changed-pages.sh main)
+          
+          if [ -z "$URLS" ]; then
+            echo "No page-related changes detected"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Detected URLs: $URLS"
+          echo "urls=$URLS" >> $GITHUB_OUTPUT
+          echo "skip=false" >> $GITHUB_OUTPUT
+          
+          # Count URLs for summary
+          URL_COUNT=$(echo "$URLS" | wc -w)
+          echo "url_count=$URL_COUNT" >> $GITHUB_OUTPUT
+          
+      - name: Start Next.js development server
+        if: steps.changed-pages.outputs.skip != 'true'
+        run: |
+          npm run dev &
+          
+          # Wait for server to be ready
+          echo "Waiting for development server..."
+          for i in {1..30}; do
+            if curl -s $LIGHTHOUSE_BASE_URL > /dev/null; then
+              echo "Server is ready!"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Server failed to start within 30 seconds"
+              exit 1
+            fi
+            sleep 1
+          done
+          
+      - name: Run Lighthouse CI
+        if: steps.changed-pages.outputs.skip != 'true'
+        env:
+          LIGHTHOUSE_URLS: ${{ steps.changed-pages.outputs.urls }}
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Running Lighthouse CI on URLs: $LIGHTHOUSE_URLS"
+          npx lhci autorun
+          
+      - name: Comment PR
+        if: steps.changed-pages.outputs.skip != 'true' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const urlCount = '${{ steps.changed-pages.outputs.url_count }}';
+            const urls = '${{ steps.changed-pages.outputs.urls }}'.split(' ');
+            
+            const body = `## 🔍 Lighthouse CI Results (${urlCount} page${urlCount > 1 ? 's' : ''})
+            
+            Lighthouse CI has analyzed the pages affected by your changes:
+            
+            ${urls.map(url => `- ${url}`).join('\n')}
+            
+            Check the **Checks** tab above for detailed results and performance metrics.
+            
+            > 💡 This analysis only covers pages affected by your changes. A full site audit runs nightly.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+            
+      - name: Skip notification
+        if: steps.changed-pages.outputs.skip == 'true'
+        run: |
+          echo "✅ No page-related files were changed in this PR"
+          echo "Lighthouse CI skipped to save resources"
+
+  # Job for scheduled runs - test all pages
+  lighthouse-full:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    name: Lighthouse CI (Full Site Audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          
+      - name: Install Node.js dependencies
+        run: npm ci
+        
+      - name: Build Next.js app
+        if: github.event.inputs.skip_build != 'true'
+        run: npm run build
+        
+      - name: Start Next.js server
+        run: |
+          if [ "${{ github.event.inputs.skip_build }}" = "true" ]; then
+            npm run dev &
+          else
+            npm start &
+          fi
+          
+          # Wait for server to be ready
+          echo "Waiting for server..."
+          for i in {1..30}; do
+            if curl -s $LIGHTHOUSE_BASE_URL > /dev/null; then
+              echo "Server is ready!"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Server failed to start within 30 seconds"
+              exit 1
+            fi
+            sleep 1
+          done
+          
+      - name: Run full Lighthouse CI audit
+        env:
+          LIGHTHOUSE_URLS: ${{ github.event.inputs.urls }}
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "$LIGHTHOUSE_URLS" ]; then
+            echo "Running Lighthouse CI on custom URLs: $LIGHTHOUSE_URLS"
+          else
+            echo "Running Lighthouse CI on all configured URLs"
+          fi
+          npx lhci autorun
+          
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports-${{ github.run_number }}
+          path: |
+            .lighthouseci/
+            lighthouse-report.html
+          retention-days: 30
+          
+      - name: Create issue on failure
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Nightly Lighthouse CI Failed - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## Lighthouse CI Failure Report
+            
+            The nightly Lighthouse CI audit failed on ${new Date().toISOString()}.
+            
+            **Run Details:**
+            - Workflow: ${{ github.workflow }}
+            - Run ID: ${{ github.run_id }}
+            - Commit: ${{ github.sha }}
+            
+            **Possible Issues:**
+            - Performance regressions
+            - Server startup failures
+            - Configuration problems
+            - Network connectivity issues
+            
+            Please check the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details.
+            
+            ---
+            *This issue was automatically created by the Lighthouse CI workflow.*`;
+            
+            // Check if there's already an open issue for today
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'lighthouse-ci,automated'
+            });
+            
+            const today = new Date().toISOString().split('T')[0];
+            const existingIssue = issues.data.find(issue => 
+              issue.title.includes(today) && issue.title.includes('Lighthouse CI Failed')
+            );
+            
+            if (!existingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['lighthouse-ci', 'automated', 'bug']
+              });
+            }
+
+  # Summary job
+  lighthouse-summary:
+    if: always() && (needs.lighthouse-pr.result != 'skipped' || needs.lighthouse-full.result != 'skipped')
+    name: Lighthouse CI Summary
+    runs-on: ubuntu-latest
+    needs: [lighthouse-pr, lighthouse-full]
+    
+    steps:
+      - name: Summary
+        run: |
+          echo "## 🔍 Lighthouse CI Summary" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.lighthouse-pr.result }}" = "success" ]; then
+            echo "✅ **PR Analysis:** Completed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.lighthouse-pr.result }}" = "skipped" ]; then
+            echo "⏭️ **PR Analysis:** Skipped (no page changes)" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.lighthouse-pr.result }}" = "failure" ]; then
+            echo "❌ **PR Analysis:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.lighthouse-full.result }}" = "success" ]; then
+            echo "✅ **Full Site Audit:** Completed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.lighthouse-full.result }}" = "failure" ]; then
+            echo "❌ **Full Site Audit:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Performance Monitoring" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎯 **PR Analysis:** Tests only pages affected by changes" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌙 **Nightly Audit:** Comprehensive site-wide performance check" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 **Reports:** Available in workflow artifacts and checks" >> $GITHUB_STEP_SUMMARY

@@ -1,10 +1,10 @@
 module.exports = {
   ci: {
     collect: {
-      // URLs to test - can be overridden by environment variables
-      url: [
-        process.env.PRODUCTION_URL || 'https://webvitals.contentstackapps.com/'
-      ].filter(Boolean),
+      // URLs to test - can be overridden by environment variables or GitHub Actions
+      url: process.env.LIGHTHOUSE_URLS ? 
+        process.env.LIGHTHOUSE_URLS.split(' ').filter(Boolean) : 
+        [process.env.PRODUCTION_URL || 'https://webvitals.contentstackapps.com/'].filter(Boolean),
       
       // Lighthouse collection settings
       numberOfRuns: 3,

@@ -1,0 +1,32 @@
+{
+  "comment": "Map dynamic routes to example URLs for Lighthouse CI testing",
+  "routes": {
+    "/product/[id]": [
+      "/product/123",
+      "/product/456",
+      "/product/bestseller"
+    ],
+    "/blog/[slug]": [
+      "/blog/nextjs-tips",
+      "/blog/github-actions",
+      "/blog/web-vitals-optimization"
+    ],
+    "/user/[userId]": [
+      "/user/demo-user",
+      "/user/test-123"
+    ],
+    "/category/[category]/[subcategory]": [
+      "/category/tech/javascript",
+      "/category/web/performance"
+    ],
+    "/docs/[...slug]": [
+      "/docs/getting-started",
+      "/docs/api/reference",
+      "/docs/guides/deployment"
+    ],
+    "/api/v1/[...path]": [
+      "/api/v1/health",
+      "/api/v1/metrics"
+    ]
+  }
+}
