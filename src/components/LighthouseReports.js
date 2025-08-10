@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, Clock, ExternalLink, FileText, TrendingUp, AlertTriangle, CheckCircle, Zap, Globe, Monitor, Accessibility, Download, GitBranch, Users, Loader, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { BarChart3, Clock, ExternalLink, FileText, TrendingUp, AlertTriangle, CheckCircle, Zap, Globe, Monitor, Accessibility, Download, GitBranch, Users, Loader, ChevronDown, ChevronUp, Eye, Target, Rocket, Award } from 'lucide-react';
 
 export default function LighthouseReports() {
   const [githubReports, setGithubReports] = useState([]);
@@ -109,6 +109,41 @@ export default function LighthouseReports() {
     }
   };
 
+  // Calculate overall performance metrics from all reports
+  const getOverallMetrics = () => {
+    const allReports = Object.values(lighthouseData).flat();
+    if (allReports.length === 0) return null;
+
+    const metrics = {
+      averagePerformance: 0,
+      averageAccessibility: 0,
+      averageSEO: 0,
+      averageBestPractices: 0,
+      totalReports: allReports.length,
+      recentRuns: githubReports.slice(0, 3).length
+    };
+
+    allReports.forEach(report => {
+      if (report.categories) {
+        metrics.averagePerformance += (report.categories.performance?.score || 0) * 100;
+        metrics.averageAccessibility += (report.categories.accessibility?.score || 0) * 100;
+        metrics.averageSEO += (report.categories.seo?.score || 0) * 100;
+        metrics.averageBestPractices += (report.categories['best-practices']?.score || 0) * 100;
+      }
+    });
+
+    if (allReports.length > 0) {
+      metrics.averagePerformance = Math.round(metrics.averagePerformance / allReports.length);
+      metrics.averageAccessibility = Math.round(metrics.averageAccessibility / allReports.length);
+      metrics.averageSEO = Math.round(metrics.averageSEO / allReports.length);
+      metrics.averageBestPractices = Math.round(metrics.averageBestPractices / allReports.length);
+    }
+
+    return metrics;
+  };
+
+  const overallMetrics = getOverallMetrics();
+
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
@@ -152,28 +187,126 @@ export default function LighthouseReports() {
 
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <BarChart3 className="w-6 h-6 text-blue-600" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Lighthouse Reports
-          </h2>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-            <GitBranch className="w-4 h-4" />
-            <span>GitHub Actions Reports: {githubReports.length}</span>
+    <div className="space-y-6">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg overflow-hidden">
+        <div className="p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              <div className="bg-blue-500 p-3 rounded-xl">
+                <Rocket className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  Performance Monitoring
+                </h1>
+                <p className="text-gray-600 dark:text-gray-300 mt-1">
+                  Automated Lighthouse CI reports from your team's GitHub Actions
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={fetchGithubReports}
+              className="bg-white dark:bg-gray-700 px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center space-x-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+              title="Refresh GitHub reports"
+            >
+              <TrendingUp className="w-5 h-5" />
+              <span className="font-medium">Refresh</span>
+            </button>
           </div>
-          <button
-            onClick={fetchGithubReports}
-            className="text-blue-600 hover:text-blue-700 transition-colors"
-            title="Refresh GitHub reports"
-          >
-            <TrendingUp className="w-5 h-5" />
-          </button>
+
+          {/* Performance Overview Cards */}
+          {overallMetrics ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-lg ${getScoreColor(overallMetrics.averagePerformance)}`}>
+                    <Zap className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Performance</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{overallMetrics.averagePerformance}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-lg ${getScoreColor(overallMetrics.averageAccessibility)}`}>
+                    <Accessibility className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Accessibility</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{overallMetrics.averageAccessibility}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-lg ${getScoreColor(overallMetrics.averageBestPractices)}`}>
+                    <CheckCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Best Practices</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{overallMetrics.averageBestPractices}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-lg ${getScoreColor(overallMetrics.averageSEO)}`}>
+                    <Globe className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">SEO</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{overallMetrics.averageSEO}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 text-center">
+              <Target className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Ready for Performance Monitoring
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Push code changes to trigger Lighthouse CI and see your performance metrics here
+              </p>
+            </div>
+          )}
+
+          {/* Quick Stats */}
+          <div className="flex flex-wrap items-center gap-6 text-sm">
+            <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
+              <GitBranch className="w-4 h-4" />
+              <span>{githubReports.length} workflow runs</span>
+            </div>
+            {overallMetrics && (
+              <>
+                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
+                  <BarChart3 className="w-4 h-4" />
+                  <span>{overallMetrics.totalReports} performance reports</span>
+                </div>
+                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
+                  <Award className="w-4 h-4" />
+                  <span>Last {overallMetrics.recentRuns} runs analyzed</span>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Detailed Reports Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Recent Performance Reports
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Automated Lighthouse audits from GitHub Actions workflow runs
+          </p>
+        </div>
 
       {/* GitHub Actions Reports */}
         <div className="space-y-4">
@@ -366,6 +499,7 @@ export default function LighthouseReports() {
             ))
           )}
         </div>
+      </div>
     </div>
   );
 }

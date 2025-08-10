@@ -722,8 +722,8 @@ export default function VitalsDashboard({ trackedUrls, onRefresh, onRefreshUrl, 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Web Vitals Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Monitor and optimize your website performance</p>
+          <h2 className="text-xl font-semibold text-foreground">PageSpeed Insights (Secondary Feature)</h2>
+          <p className="text-muted-foreground mt-1 text-sm">Google's real-world performance data for manual URL tracking</p>
         </div>
         
         <div className="flex items-center gap-3 self-start sm:self-auto">

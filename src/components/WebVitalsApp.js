@@ -464,7 +464,10 @@ export default function WebVitalsApp() {
             </div>
           </div>
 
-          {/* Web Vitals Dashboard */}
+          {/* Primary Feature: Lighthouse Reports Dashboard */}
+          <LighthouseReports />
+
+          {/* Secondary Feature: Web Vitals Dashboard */}
           <VitalsDashboard
             trackedUrls={trackedUrls}
             onRefresh={handleRefresh}
@@ -473,9 +476,6 @@ export default function WebVitalsApp() {
             onUrlsChange={handleUrlsChange}
             onOpenAddWebsite={handleOpenAddWebsite}
           />
-
-          {/* Lighthouse Reports Dashboard */}
-          <LighthouseReports />
 
           {/* Settings Modal */}
           <Settings 

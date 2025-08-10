@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Web Vitals Monitor",
-  description: "Track and monitor Core Web Vitals for your websites with real-time alerts",
+  title: "Lighthouse Performance Dashboard",
+  description: "Automated Lighthouse CI performance monitoring with GitHub Actions integration",
 };
 
 export default function RootLayout({ children }) {

@@ -300,10 +300,10 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
                 </div>
                 <div className="min-w-0">
                   <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground tracking-tight truncate">
-                    Web Vitals Monitor
+                    Lighthouse Performance Dashboard
                   </h1>
                   <p className="text-xs text-muted-foreground hidden sm:block truncate">
-                    Performance insights like Google PageSpeed
+                    Automated CI performance monitoring
                   </p>
                 </div>
               </div>
