@@ -4,6 +4,7 @@ import { Heart, Github, Globe, Shield, Zap } from 'lucide-react';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  // Test update for Lighthouse CI workflow
 
   return (
     <footer className="border-t border-border bg-card/50 backdrop-blur mt-16">

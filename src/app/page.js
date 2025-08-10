@@ -3,5 +3,10 @@
 import WebVitalsApp from '@/components/WebVitalsApp';
 
 export default function Home() {
-  return <WebVitalsApp />;
+  return (
+    <div>
+      {/* Test comment for Lighthouse CI workflow testing */}
+      <WebVitalsApp />
+    </div>
+  );
 }
