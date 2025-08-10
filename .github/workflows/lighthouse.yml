@@ -1,6 +1,20 @@
 name: Lighthouse CI
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'pages/**' 
+      - 'app/**'
+      - 'components/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'next.config.*'
+      - 'lighthouserc.js'
+      - 'dynamic-routes-map.json'
+      - 'component-routes-map.json'
   pull_request:
     branches: [main]
     paths:
@@ -14,6 +28,7 @@ on:
       - 'next.config.*'
       - 'lighthouserc.js'
       - 'dynamic-routes-map.json'
+      - 'component-routes-map.json'
   schedule:
     # Run nightly at 2 AM UTC
     - cron: '0 2 * * *'
@@ -34,10 +49,10 @@ env:
   LIGHTHOUSE_BASE_URL: ${{ vars.LIGHTHOUSE_BASE_URL || 'http://localhost:3000' }}
 
 jobs:
-  # Job for Pull Request - test only changed pages
+  # Job for Pull Request and Push - test only changed pages
   lighthouse-pr:
-    if: github.event_name == 'pull_request'
-    name: Lighthouse CI (Changed Pages)
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    name: Lighthouse CI (Changed Pages - ${{ github.event_name }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     
