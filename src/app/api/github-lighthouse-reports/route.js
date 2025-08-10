@@ -81,6 +81,7 @@ export async function GET(request) {
                 name: artifact.name,
                 size_in_bytes: artifact.size_in_bytes,
                 download_url: `/api/github-lighthouse-reports/download/${artifact.id}`,
+                extract_url: `/api/github-lighthouse-reports/extract/${artifact.id}`,
                 created_at: artifact.created_at,
                 expired: artifact.expired
               }))

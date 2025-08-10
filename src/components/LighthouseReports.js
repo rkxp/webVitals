@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, Clock, ExternalLink, FileText, TrendingUp, AlertTriangle, CheckCircle, Zap, Globe, Monitor, Accessibility, Download, GitBranch, Users, Loader } from 'lucide-react';
+import { BarChart3, Clock, ExternalLink, FileText, TrendingUp, AlertTriangle, CheckCircle, Zap, Globe, Monitor, Accessibility, Download, GitBranch, Users, Loader, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 
 export default function LighthouseReports() {
   const [githubReports, setGithubReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [syncingArtifacts, setSyncingArtifacts] = useState(new Set());
+  const [expandedReports, setExpandedReports] = useState(new Set());
+  const [lighthouseData, setLighthouseData] = useState({});
 
   useEffect(() => {
     fetchGithubReports();
@@ -36,27 +37,43 @@ export default function LighthouseReports() {
     }
   };
 
-  const syncArtifact = async (artifactId) => {
+  const loadLighthouseData = async (artifactId) => {
     try {
-      setSyncingArtifacts(prev => new Set([...prev, artifactId]));
-      
-      const response = await fetch(`/api/github-lighthouse-reports/download/${artifactId}?sync=true`);
-      const data = await response.json();
-      
-      if (data.success) {
-        // Refresh GitHub reports after successful sync
-        fetchGithubReports();
+      const response = await fetch(`/api/github-lighthouse-reports/extract/${artifactId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setLighthouseData(prev => ({
+          ...prev,
+          [artifactId]: data.reports || []
+        }));
+        return data.reports || [];
       } else {
-        alert('Failed to sync artifact: ' + data.error);
+        console.error('Failed to extract Lighthouse data');
+        return [];
       }
     } catch (err) {
-      alert('Error syncing artifact: ' + err.message);
-    } finally {
-      setSyncingArtifacts(prev => {
+      console.error('Error loading Lighthouse data:', err);
+      return [];
+    }
+  };
+
+  const toggleReportExpansion = async (runId, artifactId) => {
+    const reportKey = `${runId}-${artifactId}`;
+    
+    if (expandedReports.has(reportKey)) {
+      // Collapse
+      setExpandedReports(prev => {
         const newSet = new Set(prev);
-        newSet.delete(artifactId);
+        newSet.delete(reportKey);
         return newSet;
       });
+    } else {
+      // Expand and load data if not already loaded
+      setExpandedReports(prev => new Set([...prev, reportKey]));
+      
+      if (!lighthouseData[artifactId]) {
+        await loadLighthouseData(artifactId);
+      }
     }
   };
 
@@ -203,44 +220,139 @@ export default function LighthouseReports() {
                   </div>
                 </div>
 
-                {/* Artifacts */}
+                {/* Lighthouse Reports */}
                 <div className="space-y-2">
-                  {run.artifacts.map(artifact => (
-                    <div
-                      key={artifact.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-600 rounded-lg"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                        <div>
-                          <p className="font-medium text-sm">{artifact.name}</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
-                            {(artifact.size_in_bytes / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => syncArtifact(artifact.id)}
-                          disabled={syncingArtifacts.has(artifact.id)}
-                          className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
-                        >
-                          {syncingArtifacts.has(artifact.id) ? (
-                            <Loader className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Download className="w-4 h-4" />
+                  {run.artifacts
+                    .filter(artifact => artifact.name.includes('lighthouse-reports-'))
+                    .map(artifact => {
+                      const reportKey = `${run.run_id}-${artifact.id}`;
+                      const isExpanded = expandedReports.has(reportKey);
+                      const reports = lighthouseData[artifact.id] || [];
+                      
+                      return (
+                        <div key={artifact.id} className="border border-gray-200 dark:border-gray-600 rounded-lg">
+                          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-600 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <BarChart3 className="w-4 h-4 text-blue-600" />
+                              <div>
+                                <p className="font-medium text-sm">Lighthouse Reports</p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                  {reports.length > 0 ? `${reports.length} URLs tested` : 'Click to view reports'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => toggleReportExpansion(run.run_id, artifact.id)}
+                                className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center space-x-1"
+                              >
+                                <Eye className="w-4 h-4" />
+                                <span>{isExpanded ? 'Hide' : 'View'}</span>
+                                {isExpanded ? (
+                                  <ChevronUp className="w-4 h-4" />
+                                ) : (
+                                  <ChevronDown className="w-4 h-4" />
+                                )}
+                              </button>
+                              <a
+                                href={artifact.download_url}
+                                className="text-blue-600 hover:text-blue-700 transition-colors"
+                                title="Download ZIP"
+                              >
+                                <Download className="w-4 h-4" />
+                              </a>
+                            </div>
+                          </div>
+                          
+                          {/* Expanded Lighthouse Reports */}
+                          {isExpanded && (
+                            <div className="p-4 border-t border-gray-200 dark:border-gray-600">
+                              {reports.length === 0 ? (
+                                <div className="text-center py-4">
+                                  <Loader className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">Loading Lighthouse reports...</p>
+                                </div>
+                              ) : (
+                                <div className="space-y-4">
+                                  {reports.map((report, reportIndex) => (
+                                    <div key={reportIndex} className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-100 dark:border-gray-600">
+                                      <div className="flex items-center justify-between mb-3">
+                                        <div>
+                                          <h4 className="font-medium text-gray-900 dark:text-white">{report.url}</h4>
+                                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                                            {new Date(report.timestamp).toLocaleString()}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Performance Scores */}
+                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                                        {Object.entries(report.categories || {}).map(([category, data]) => {
+                                          const score = Math.round(data.score * 100);
+                                          
+                                          return (
+                                            <div
+                                              key={category}
+                                              className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${getScoreColor(score)}`}
+                                            >
+                                              <CategoryIcon category={category} />
+                                              <div>
+                                                <p className="text-xs font-medium capitalize">
+                                                  {category.replace('-', ' ')}
+                                                </p>
+                                                <p className="text-sm font-bold">{score}</p>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                      
+                                      {/* Core Web Vitals */}
+                                      {report.audits && (
+                                        <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
+                                          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                            Core Web Vitals
+                                          </p>
+                                          <div className="grid grid-cols-3 gap-3 text-sm">
+                                            {report.audits['largest-contentful-paint'] && (
+                                              <div className="text-center">
+                                                <p className="font-medium">LCP</p>
+                                                <p className="text-gray-600 dark:text-gray-400">
+                                                  {report.audits['largest-contentful-paint'].displayValue || 
+                                                   `${Math.round(report.audits['largest-contentful-paint'].numericValue / 10) / 100}s`}
+                                                </p>
+                                              </div>
+                                            )}
+                                            {report.audits['cumulative-layout-shift'] && (
+                                              <div className="text-center">
+                                                <p className="font-medium">CLS</p>
+                                                <p className="text-gray-600 dark:text-gray-400">
+                                                  {report.audits['cumulative-layout-shift'].displayValue || 
+                                                   Math.round(report.audits['cumulative-layout-shift'].numericValue * 1000) / 1000}
+                                                </p>
+                                              </div>
+                                            )}
+                                            {report.audits['interaction-to-next-paint'] && (
+                                              <div className="text-center">
+                                                <p className="font-medium">INP</p>
+                                                <p className="text-gray-600 dark:text-gray-400">
+                                                  {report.audits['interaction-to-next-paint'].displayValue ||
+                                                   `${Math.round(report.audits['interaction-to-next-paint'].numericValue)}ms`}
+                                                </p>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           )}
-                        </button>
-                        <a
-                          href={artifact.download_url}
-                          className="text-blue-600 hover:text-blue-700 transition-colors"
-                          title="Download artifact"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      </div>
-                    </div>
-                  ))}
+                        </div>
+                      );
+                    })}
                 </div>
 
                 {run.pr_number && (
