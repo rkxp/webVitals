@@ -120,8 +120,6 @@ jobs:
         if: steps.changed-pages.outputs.skip != 'true'
         env:
           LIGHTHOUSE_URLS: ${{ steps.changed-pages.outputs.urls }}
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Running Lighthouse CI on URLs: $LIGHTHOUSE_URLS"
           npx lhci autorun
@@ -211,8 +209,6 @@ jobs:
       - name: Run full Lighthouse CI audit
         env:
           LIGHTHOUSE_URLS: ${{ github.event.inputs.urls }}
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -n "$LIGHTHOUSE_URLS" ]; then
             echo "Running Lighthouse CI on custom URLs: $LIGHTHOUSE_URLS"
