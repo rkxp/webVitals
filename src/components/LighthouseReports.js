@@ -4,48 +4,35 @@ import { useState, useEffect } from 'react';
 import { BarChart3, Clock, ExternalLink, FileText, TrendingUp, AlertTriangle, CheckCircle, Zap, Globe, Monitor, Accessibility, Download, GitBranch, Users, Loader } from 'lucide-react';
 
 export default function LighthouseReports() {
-  const [reports, setReports] = useState([]);
   const [githubReports, setGithubReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedReport, setSelectedReport] = useState(null);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('github'); // Only GitHub Actions reports
   const [syncingArtifacts, setSyncingArtifacts] = useState(new Set());
 
   useEffect(() => {
     fetchGithubReports();
   }, []);
 
-  const fetchLighthouseReports = async () => {
-    try {
-      setLoading(true);
-      // Fetch list of available reports
-      const response = await fetch('/api/lighthouse-reports');
-      if (response.ok) {
-        const data = await response.json();
-        setReports(data.reports || []);
-      } else {
-        setError('Failed to fetch Lighthouse reports');
-      }
-    } catch (err) {
-      setError('Error loading Lighthouse reports: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const fetchGithubReports = async () => {
     try {
+      setLoading(true);
       // Fetch GitHub Actions Lighthouse reports
       const response = await fetch('/api/github-lighthouse-reports');
       if (response.ok) {
         const data = await response.json();
         setGithubReports(data.reports || []);
+        setError(null);
       } else {
         console.warn('GitHub reports not available (token may not be configured)');
+        setError('GitHub reports not available. Check GitHub token configuration.');
       }
     } catch (err) {
       console.warn('GitHub reports fetch failed:', err.message);
+      setError('Failed to fetch GitHub reports: ' + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -57,8 +44,8 @@ export default function LighthouseReports() {
       const data = await response.json();
       
       if (data.success) {
-        // Refresh local reports to include synced ones
-        fetchLighthouseReports();
+        // Refresh GitHub reports after successful sync
+        fetchGithubReports();
       } else {
         alert('Failed to sync artifact: ' + data.error);
       }
@@ -204,7 +191,7 @@ export default function LighthouseReports() {
               <GitBranch className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 No GitHub Actions Lighthouse reports found. 
-                {!process.env.GITHUB_TOKEN && ' GitHub token may not be configured.'}
+                Make sure your GitHub token is configured and workflows have run.
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-500">
                 Reports will appear here when team members push changes that trigger Lighthouse CI.
