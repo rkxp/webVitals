@@ -128,10 +128,42 @@ jobs:
         if: steps.changed-pages.outputs.skip != 'true' && always()
         uses: actions/upload-artifact@v4
         with:
-          name: lighthouse-reports-changed-pages-${{ github.run_id }}
+          name: lighthouse-reports-pr-${{ github.event.number || github.run_id }}
           path: |
             public/lighthouse-reports/
             .lighthouseci/
+          retention-days: 30
+          
+      - name: Post Lighthouse results summary
+        if: steps.changed-pages.outputs.skip != 'true' && always()
+        run: |
+          echo "Creating Lighthouse results summary..."
+          
+          # Create results summary JSON
+          cat > lighthouse-summary.json << 'EOF'
+          {
+            "workflow_run_id": "${{ github.run_id }}",
+            "commit_sha": "${{ github.sha }}",
+            "branch": "${{ github.head_ref || github.ref_name }}",
+            "event_type": "${{ github.event_name }}",
+            "pr_number": "${{ github.event.number }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "changed_urls": "${{ steps.changed-pages.outputs.urls }}",
+            "artifact_name": "lighthouse-reports-pr-${{ github.event.number || github.run_id }}",
+            "reports_path": "public/lighthouse-reports/",
+            "triggered_by": "${{ github.actor }}"
+          }
+          EOF
+          
+          # Upload summary as separate artifact for easy access
+          echo "Lighthouse summary created for dashboard integration"
+          
+      - name: Upload Lighthouse summary
+        if: steps.changed-pages.outputs.skip != 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-summary-${{ github.event.number || github.run_id }}
+          path: lighthouse-summary.json
           retention-days: 30
           
       - name: Comment PR
