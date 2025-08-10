@@ -8,21 +8,21 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Function to log with colors
+# Function to log with colors (to stderr to avoid interfering with URL output)
 log() {
-    echo -e "${BLUE}[LIGHTHOUSE CI]${NC} $1"
+    echo -e "${BLUE}[LIGHTHOUSE CI]${NC} $1" >&2
 }
 
 warn() {
-    echo -e "${YELLOW}[LIGHTHOUSE CI]${NC} $1"
+    echo -e "${YELLOW}[LIGHTHOUSE CI]${NC} $1" >&2
 }
 
 error() {
-    echo -e "${RED}[LIGHTHOUSE CI]${NC} $1"
+    echo -e "${RED}[LIGHTHOUSE CI]${NC} $1" >&2
 }
 
 success() {
-    echo -e "${GREEN}[LIGHTHOUSE CI]${NC} $1"
+    echo -e "${GREEN}[LIGHTHOUSE CI]${NC} $1" >&2
 }
 
 # Function to add URL if not already present
@@ -140,28 +140,38 @@ fi
 
 # Get changed files
 log "Detecting changed files between current branch and $BASE_BRANCH..."
-CHANGED_FILES=$(git diff --name-only $BASE_BRANCH...HEAD 2>/dev/null || git diff --name-only $BASE_BRANCH)
+
+# Check if we're on the same branch as the base branch (e.g., main comparing to main)
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [ "$CURRENT_BRANCH" = "$BASE_BRANCH" ]; then
+    log "Currently on $BASE_BRANCH branch, comparing against previous commit..."
+    # Compare against the previous commit (HEAD~1)
+    CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+else
+    # Compare against the base branch
+    CHANGED_FILES=$(git diff --name-only $BASE_BRANCH...HEAD 2>/dev/null || git diff --name-only $BASE_BRANCH)
+fi
 
 if [ -z "$CHANGED_FILES" ]; then
     warn "No changed files detected"
-    echo ""
+    echo "" >&2
     exit 0
 fi
 
 log "Changed files:"
-echo "$CHANGED_FILES" | sed 's/^/  - /'
+echo "$CHANGED_FILES" | sed 's/^/  - /' >&2
 
 # Filter for page-related files
 PAGE_RELATED_FILES=$(echo "$CHANGED_FILES" | grep -E '^(src/)?(pages|app|components)/' || true)
 
 if [ -z "$PAGE_RELATED_FILES" ]; then
     warn "No page-related files changed (pages/, app/, components/)"
-    echo ""
+    echo "" >&2
     exit 0
 fi
 
 log "Page-related changed files:"
-echo "$PAGE_RELATED_FILES" | sed 's/^/  - /'
+echo "$PAGE_RELATED_FILES" | sed 's/^/  - /' >&2
 
 # Process component files immediately to get their routes
 log "Processing component files for route mapping..."
@@ -354,7 +364,7 @@ if [ ${#UNIQUE_URLS[@]} -eq 0 ]; then
 fi
 
 success "Detected ${#UNIQUE_URLS[@]} unique URL(s) to test:"
-printf '%s\n' "${UNIQUE_URLS[@]}" | sed 's/^/  - /'
+printf '%s\n' "${UNIQUE_URLS[@]}" | sed 's/^/  - /' >&2
 
-# Output space-separated URLs for GitHub Actions
+# Output space-separated URLs for GitHub Actions (to stdout)
 printf '%s' "${UNIQUE_URLS[*]}"
