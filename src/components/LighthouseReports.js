@@ -273,7 +273,7 @@ export default function LighthouseReports() {
         <div className="flex items-center space-x-3 mb-6">
           <BarChart3 className="w-6 h-6 text-blue-400" />
           <h2 className="text-xl font-semibold text-white">
-            Performance Hub
+            Lighthouse Dashboard
           </h2>
         </div>
         <div className="text-center py-12">
@@ -391,19 +391,27 @@ export default function LighthouseReports() {
         
         <div className="relative p-8 md:p-12">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            {/* Hero Content */}
+            {/* Clear Hero Content with Explanation */}
             <div className="flex items-start space-x-4">
-              <div className="bg-gray-800 border border-gray-700 p-4 rounded-2xl shadow-lg">
-                <Rocket className="w-10 h-10 text-blue-400" />
+              <div className="bg-blue-600/20 border border-blue-500/30 p-4 rounded-2xl shadow-lg">
+                <TrendingUp className="w-10 h-10 text-blue-400" />
               </div>
               <div>
                 <h2 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
-                  Performance Hub
+                  Lighthouse Dashboard
                 </h2>
-                <p className="text-gray-300 text-lg max-w-2xl leading-relaxed font-light">
-                  Real-time Lighthouse CI monitoring powered by GitHub Actions. 
-                  Track performance, accessibility, and SEO across your team.
+                <p className="text-gray-300 text-lg max-w-2xl leading-relaxed font-light mb-3">
+                  Automated <strong className="text-blue-400">Google Lighthouse</strong> performance analysis for every code change.
                 </p>
+                <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3 max-w-2xl">
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    <strong className="text-white">What is Lighthouse?</strong> Google's open-source tool that measures website 
+                    <strong className="text-green-400"> Performance</strong>, 
+                    <strong className="text-blue-400"> Accessibility</strong>, 
+                    <strong className="text-purple-400"> SEO</strong>, and 
+                    <strong className="text-yellow-400"> Best Practices</strong> with scores from 0-100.
+                  </p>
+                </div>
               </div>
             </div>
             
@@ -648,8 +656,19 @@ export default function LighthouseReports() {
                     </div>
                   </div>
 
-                {/* Enhanced Lighthouse Reports Section */}
-                <div className="space-y-3">
+                {/* Clear Performance Analysis Dashboard */}
+                <div className="space-y-4">
+                  {/* Section Header with Clear Explanation */}
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <BarChart3 className="w-5 h-5 text-blue-400" />
+                      <h4 className="text-lg font-semibold text-white">Performance Analysis Results</h4>
+                    </div>
+                    <p className="text-gray-400 text-sm">
+                      This commit was analyzed for performance, accessibility, SEO, and best practices using Google Lighthouse.
+                    </p>
+                  </div>
+                  
                   {run.artifacts
                     .filter(artifact => 
                       artifact.name.includes('lighthouse-reports-') || 
@@ -660,24 +679,64 @@ export default function LighthouseReports() {
                       const isExpanded = expandedReports.has(reportKey);
                       const artifactData = lighthouseData[artifact.id];
                       const reports = artifactData?.reports || artifactData || [];
+                      const isMainReport = artifact.name.includes('lighthouse-reports-');
+                      const isSummary = artifact.name.includes('lighthouse-summary-');
                       
                       return (
-                        <div key={artifact.id} className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden hover:border-gray-600 transition-all duration-200">
-                          <div className="flex items-center justify-between p-4 bg-gray-750 hover:bg-gray-700 transition-colors duration-200">
-                            <div className="flex items-center space-x-3">
-                              <div className="bg-blue-500/20 border border-blue-500/30 p-2 rounded-lg">
-                                <BarChart3 className="w-5 h-5 text-blue-400" />
+                        <div key={artifact.id} className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden shadow-lg">
+                          <div className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-750 to-gray-800 hover:from-gray-700 hover:to-gray-750 transition-all duration-200">
+                            <div className="flex items-center space-x-4">
+                              {/* Clear Visual Indicators */}
+                              <div className={`p-3 rounded-xl border flex items-center justify-center ${
+                                isMainReport 
+                                  ? (reports.length > 0 
+                                    ? 'bg-green-600/20 border-green-500/30' 
+                                    : 'bg-yellow-600/20 border-yellow-500/30')
+                                  : 'bg-blue-600/20 border-blue-500/30'
+                              }`}>
+                                {isMainReport ? (
+                                  reports.length > 0 ? (
+                                    <TrendingUp className="w-6 h-6 text-green-400" />
+                                  ) : (
+                                    <AlertTriangle className="w-6 h-6 text-yellow-400" />
+                                  )
+                                ) : (
+                                  <FileText className="w-6 h-6 text-blue-400" />
+                                )}
                               </div>
-                              <div>
-                                <p className="font-medium text-white text-base">
-                                  {artifact.name.includes('lighthouse-reports-') ? 'Lighthouse Reports' : 'Lighthouse Summary'}
-                                </p>
-                                <p className="text-sm text-gray-400">
-                                  {artifact.name.includes('lighthouse-reports-') 
-                                    ? (reports.length > 0 ? `${reports.length} URLs tested` : 'Click to view reports')
-                                    : (artifact.name.includes('lighthouse-summary-') 
-                                      ? 'Workflow summary and metadata' 
-                                      : 'Click to view details')
+                              
+                              <div className="flex-1">
+                                {/* Clear Titles and Descriptions */}
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <h5 className="font-semibold text-white text-lg">
+                                    {isMainReport ? '📊 Performance Scores & Metrics' : '📋 Workflow Execution Details'}
+                                  </h5>
+                                  
+                                  {isMainReport && reports.length > 0 && (
+                                    <span className="bg-green-600/20 text-green-400 px-3 py-1 rounded-full text-sm font-medium border border-green-500/30">
+                                      ✅ {reports.length} Page{reports.length !== 1 ? 's' : ''} Analyzed
+                                    </span>
+                                  )}
+                                  
+                                  {isMainReport && reports.length === 0 && (
+                                    <span className="bg-yellow-600/20 text-yellow-400 px-3 py-1 rounded-full text-sm font-medium border border-yellow-500/30">
+                                      ⚠️ No Scores Available
+                                    </span>
+                                  )}
+                                  
+                                  {isSummary && (
+                                    <span className="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full text-sm font-medium border border-blue-500/30">
+                                      ℹ️ Debug Info
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                <p className="text-gray-300 text-sm leading-relaxed">
+                                  {isMainReport 
+                                    ? (reports.length > 0 
+                                      ? `View detailed performance scores (0-100), Core Web Vitals, and optimization recommendations for ${reports.length} page${reports.length !== 1 ? 's' : ''}` 
+                                      : 'Performance analysis was attempted but no scores were generated (likely due to quality gate failures or testing issues)')
+                                    : 'Technical details about the workflow execution, including exit codes, error messages, and troubleshooting information'
                                   }
                                 </p>
                               </div>
@@ -685,14 +744,38 @@ export default function LighthouseReports() {
                             <div className="flex items-center space-x-3">
                               <button
                                 onClick={() => toggleReportExpansion(run.run_id, artifact.id)}
-                                className="px-4 py-2 text-sm bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition-all duration-200 flex items-center space-x-2 border border-blue-400/30 hover:border-blue-300/50 shadow-sm"
+                                className={`px-5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center space-x-2 border shadow-sm ${
+                                  isMainReport 
+                                    ? (reports.length > 0 
+                                      ? 'bg-green-600 hover:bg-green-500 text-white border-green-500/30 hover:border-green-400/50'
+                                      : 'bg-yellow-600 hover:bg-yellow-500 text-white border-yellow-500/30 hover:border-yellow-400/50')
+                                    : 'bg-blue-600 hover:bg-blue-500 text-white border-blue-500/30 hover:border-blue-400/50'
+                                }`}
                               >
-                                <Eye className="w-4 h-4" />
-                                <span>{isExpanded ? 'Hide' : 'View'}</span>
                                 {isExpanded ? (
-                                  <ChevronUp className="w-4 h-4" />
+                                  <>
+                                    <ChevronUp className="w-4 h-4" />
+                                    <span>Hide Details</span>
+                                  </>
                                 ) : (
-                                  <ChevronDown className="w-4 h-4" />
+                                  <>
+                                    {isMainReport ? (
+                                      reports.length > 0 ? (
+                                        <TrendingUp className="w-4 h-4" />
+                                      ) : (
+                                        <AlertTriangle className="w-4 h-4" />
+                                      )
+                                    ) : (
+                                      <FileText className="w-4 h-4" />
+                                    )}
+                                    <span>
+                                      {isMainReport 
+                                        ? (reports.length > 0 ? 'View Performance Scores' : 'View Analysis Details')
+                                        : 'View Execution Info'
+                                      }
+                                    </span>
+                                    <ChevronDown className="w-4 h-4" />
+                                  </>
                                 )}
                               </button>
                               <a
