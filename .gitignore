@@ -36,6 +36,14 @@ yarn-error.log*
 # vercel
 .vercel
 
+# lighthouse reports (local development)
+/public/lighthouse-reports/*.html
+/public/lighthouse-reports/*.json
+!/public/lighthouse-reports/.gitkeep
+
+# lighthouse ci temp files
+/.lighthouseci/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

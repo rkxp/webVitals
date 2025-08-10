@@ -32,8 +32,9 @@ module.exports = {
     },
     
     upload: {
-      // For GitHub Actions, just store results temporarily without GitHub status integration
-      target: 'temporary-public-storage'
+      // Save reports locally for dashboard integration
+      target: 'filesystem',
+      outputDir: './public/lighthouse-reports'
     }
   }
 };

@@ -124,6 +124,16 @@ jobs:
           echo "Running Lighthouse CI on URLs: $LIGHTHOUSE_URLS"
           npx lhci autorun
           
+      - name: Upload Lighthouse reports as artifacts
+        if: steps.changed-pages.outputs.skip != 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports-changed-pages-${{ github.run_id }}
+          path: |
+            public/lighthouse-reports/
+            .lighthouseci/
+          retention-days: 30
+          
       - name: Comment PR
         if: steps.changed-pages.outputs.skip != 'true' && github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -221,10 +231,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lighthouse-reports-${{ github.run_number }}
+          name: lighthouse-reports-full-${{ github.run_id }}
           path: |
+            public/lighthouse-reports/
             .lighthouseci/
-            lighthouse-report.html
           retention-days: 30
           
       - name: Create issue on failure

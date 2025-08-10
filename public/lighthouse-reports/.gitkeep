@@ -1,0 +1,2 @@
+# This file ensures the lighthouse-reports directory is tracked by git
+# Lighthouse report files will be generated here during local development

@@ -8,6 +8,7 @@ import { sendAlert } from '@/lib/alerts';
 import Header from './Header';
 import Footer from './Footer';
 import VitalsDashboard from './VitalsDashboard';
+import LighthouseReports from './LighthouseReports';
 import Settings from './Settings';
 
 export default function WebVitalsApp() {
@@ -463,8 +464,8 @@ export default function WebVitalsApp() {
             </div>
           </div>
 
-          {/* Dashboard */}
-                    <VitalsDashboard
+          {/* Web Vitals Dashboard */}
+          <VitalsDashboard
             trackedUrls={trackedUrls}
             onRefresh={handleRefresh}
             onRefreshUrl={handleRefreshUrl}
@@ -472,6 +473,9 @@ export default function WebVitalsApp() {
             onUrlsChange={handleUrlsChange}
             onOpenAddWebsite={handleOpenAddWebsite}
           />
+
+          {/* Lighthouse Reports Dashboard */}
+          <LighthouseReports />
 
           {/* Settings Modal */}
           <Settings 
