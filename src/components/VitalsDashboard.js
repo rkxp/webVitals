@@ -666,14 +666,14 @@ export default function VitalsDashboard({ trackedUrls, onRefresh, onRefreshUrl, 
 
   if (trackedUrls.length === 0) {
     return (
-      <div className="text-center py-16">
+      <section className="text-center py-16" aria-labelledby="web-vitals-welcome-heading">
         <div className="bg-card border border-border rounded-lg p-8 shadow-sm max-w-4xl mx-auto">
           <div className="flex flex-col items-center space-y-4">
-            <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+            <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-full" aria-hidden="true">
               <Globe size={48} className="text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">
+              <h2 id="web-vitals-welcome-heading" className="text-xl font-semibold text-foreground mb-2">
                 Welcome to Web Vitals Monitor
               </h2>
               <p className="text-muted-foreground text-base max-w-md">
@@ -713,7 +713,7 @@ export default function VitalsDashboard({ trackedUrls, onRefresh, onRefreshUrl, 
             </div>
           </div>
         </div>
-      </div>
+      </section>
     );
   }
 

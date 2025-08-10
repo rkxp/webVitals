@@ -325,7 +325,7 @@ p, span, div {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Apple-style Dark Mode Colors */
+/* Apple-style Dark Mode Colors with Enhanced Accessibility */
 .bg-gray-750 {
   background-color: rgb(55 65 81);
 }
@@ -344,4 +344,40 @@ p, span, div {
 
 .hover\:bg-gray-650:hover {
   background-color: rgb(75 85 99);
+}
+
+/* High Contrast Accessibility Colors */
+.text-high-contrast {
+  color: #ffffff;
+}
+
+.text-muted-accessible {
+  color: #d1d5db; /* Better contrast than gray-400 */
+}
+
+.border-accessible {
+  border-color: #6b7280; /* Better contrast for borders */
+}
+
+/* Focus States for Better Accessibility */
+.focus-accessible:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Skip Link Styles */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #3b82f6;
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 1000;
+}
+
+.skip-link:focus {
+  top: 6px;
 }

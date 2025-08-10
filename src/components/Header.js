@@ -289,13 +289,13 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
   };
 
   return (
-    <header className="sticky top-0 z-[2147483646] bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
+    <header className="sticky top-0 z-[2147483646] bg-background/95 backdrop-blur-sm border-b border-border shadow-sm" role="banner">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4 min-h-[4rem]">
           <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
             <div className="flex items-center min-w-0">
               <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0" aria-hidden="true">
                   <Zap className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div className="min-w-0">

@@ -382,24 +382,24 @@ export default function LighthouseReports() {
 
 
   return (
-    <div className="space-y-8">
+    <section className="space-y-8" aria-labelledby="lighthouse-dashboard-heading">
       {/* Apple-Style Dark Hero Section */}
-      <div className="relative bg-gray-900 rounded-3xl shadow-2xl overflow-hidden border border-gray-800">
+      <header className="relative bg-gray-900 rounded-3xl shadow-2xl overflow-hidden border border-gray-800" role="banner">
         {/* Subtle Background Pattern */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-800/30 to-gray-900/30"></div>
-        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-800/30 to-gray-900/30" aria-hidden="true"></div>
+        <div className="absolute inset-0 bg-grid-pattern opacity-5" aria-hidden="true"></div>
         
         <div className="relative p-8 md:p-12">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             {/* Clear Hero Content with Explanation */}
             <div className="flex items-start space-x-4">
-              <div className="bg-blue-600/20 border border-blue-500/30 p-4 rounded-2xl shadow-lg">
+              <div className="bg-blue-600/20 border border-blue-500/30 p-4 rounded-2xl shadow-lg" aria-hidden="true">
                 <TrendingUp className="w-10 h-10 text-blue-400" />
               </div>
               <div>
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
+                <h1 id="lighthouse-dashboard-heading" className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
                   Lighthouse Dashboard
-                </h2>
+                </h1>
                 <p className="text-gray-300 text-lg max-w-2xl leading-relaxed font-light mb-3">
                   Automated <strong className="text-blue-400">Google Lighthouse</strong> performance analysis for every code change.
                 </p>
@@ -417,27 +417,29 @@ export default function LighthouseReports() {
             
             {/* Apple-Style Action Button */}
             <div className="flex-shrink-0">
-              <button
-                onClick={fetchGithubReports}
-                className="bg-blue-500 hover:bg-blue-400 text-white px-6 py-3 rounded-2xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-3 border border-blue-400/20"
-                aria-label="Refresh Lighthouse reports from GitHub Actions"
-                title="Refresh reports"
-              >
-                <TrendingUp className="w-5 h-5" />
-                <span>Refresh Data</span>
-              </button>
+                              <button
+                  onClick={fetchGithubReports}
+                  className="bg-blue-500 hover:bg-blue-400 text-white px-6 py-3 rounded-2xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-3 border border-blue-400/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                  aria-label="Refresh Lighthouse reports from GitHub Actions"
+                  title="Refresh reports"
+                >
+                  <TrendingUp className="w-5 h-5" aria-hidden="true" />
+                  <span>Refresh Data</span>
+                </button>
             </div>
           </div>
 
           {/* Apple-Style Performance Cards */}
           {overallMetrics ? (
-            <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Performance Card */}
-              <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:bg-gray-750 transition-all duration-300 shadow-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="bg-orange-500/20 border border-orange-500/30 p-3 rounded-xl">
-                    <Zap className="w-6 h-6 text-orange-400" />
-                  </div>
+            <section className="mt-8" aria-labelledby="performance-overview-heading">
+              <h2 id="performance-overview-heading" className="sr-only">Performance Overview Metrics</h2>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Performance Card */}
+                <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:bg-gray-750 transition-all duration-300 shadow-lg" role="group" aria-labelledby="performance-score-label">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="bg-orange-500/20 border border-orange-500/30 p-3 rounded-xl" aria-hidden="true">
+                      <Zap className="w-6 h-6 text-orange-400" />
+                    </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     overallMetrics.averagePerformance >= 90 ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
                     overallMetrics.averagePerformance >= 50 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
@@ -446,14 +448,19 @@ export default function LighthouseReports() {
                     {overallMetrics.averagePerformance >= 90 ? 'Great' : overallMetrics.averagePerformance >= 50 ? 'Good' : 'Poor'}
                   </span>
                 </div>
-                <h3 className="text-gray-400 font-medium mb-1">Performance</h3>
-                <p className="text-3xl font-bold text-white">{overallMetrics.averagePerformance}</p>
+                <h3 id="performance-score-label" className="text-gray-400 font-medium mb-1">Performance</h3>
+                <p className="text-3xl font-bold text-white" aria-describedby="performance-score-description">
+                  {overallMetrics.averagePerformance}
+                </p>
+                <span id="performance-score-description" className="sr-only">
+                  Average performance score out of 100
+                </span>
               </div>
 
               {/* Accessibility Card */}
-              <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:bg-gray-750 transition-all duration-300 shadow-lg">
+              <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:bg-gray-750 transition-all duration-300 shadow-lg" role="group" aria-labelledby="accessibility-score-label">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="bg-blue-500/20 border border-blue-500/30 p-3 rounded-xl">
+                  <div className="bg-blue-500/20 border border-blue-500/30 p-3 rounded-xl" aria-hidden="true">
                     <Accessibility className="w-6 h-6 text-blue-400" />
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -464,14 +471,19 @@ export default function LighthouseReports() {
                     {overallMetrics.averageAccessibility >= 90 ? 'Great' : overallMetrics.averageAccessibility >= 50 ? 'Good' : 'Poor'}
                   </span>
                 </div>
-                <h3 className="text-gray-400 font-medium mb-1">Accessibility</h3>
-                <p className="text-3xl font-bold text-white">{overallMetrics.averageAccessibility}</p>
+                <h3 id="accessibility-score-label" className="text-gray-400 font-medium mb-1">Accessibility</h3>
+                <p className="text-3xl font-bold text-white" aria-describedby="accessibility-score-description">
+                  {overallMetrics.averageAccessibility}
+                </p>
+                <span id="accessibility-score-description" className="sr-only">
+                  Average accessibility score out of 100
+                </span>
               </div>
 
               {/* Best Practices Card */}
-              <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:bg-gray-750 transition-all duration-300 shadow-lg">
+              <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:bg-gray-750 transition-all duration-300 shadow-lg" role="group" aria-labelledby="best-practices-score-label">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="bg-green-500/20 border border-green-500/30 p-3 rounded-xl">
+                  <div className="bg-green-500/20 border border-green-500/30 p-3 rounded-xl" aria-hidden="true">
                     <CheckCircle className="w-6 h-6 text-green-400" />
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -482,14 +494,19 @@ export default function LighthouseReports() {
                     {overallMetrics.averageBestPractices >= 90 ? 'Great' : overallMetrics.averageBestPractices >= 50 ? 'Good' : 'Poor'}
                   </span>
                 </div>
-                <h3 className="text-gray-400 font-medium mb-1">Best Practices</h3>
-                <p className="text-3xl font-bold text-white">{overallMetrics.averageBestPractices}</p>
+                <h3 id="best-practices-score-label" className="text-gray-400 font-medium mb-1">Best Practices</h3>
+                <p className="text-3xl font-bold text-white" aria-describedby="best-practices-score-description">
+                  {overallMetrics.averageBestPractices}
+                </p>
+                <span id="best-practices-score-description" className="sr-only">
+                  Average best practices score out of 100
+                </span>
               </div>
 
               {/* SEO Card */}
-              <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:bg-gray-750 transition-all duration-300 shadow-lg">
+              <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:bg-gray-750 transition-all duration-300 shadow-lg" role="group" aria-labelledby="seo-score-label">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="bg-purple-500/20 border border-purple-500/30 p-3 rounded-xl">
+                  <div className="bg-purple-500/20 border border-purple-500/30 p-3 rounded-xl" aria-hidden="true">
                     <Globe className="w-6 h-6 text-purple-400" />
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -500,10 +517,16 @@ export default function LighthouseReports() {
                     {overallMetrics.averageSEO >= 90 ? 'Great' : overallMetrics.averageSEO >= 50 ? 'Good' : 'Poor'}
                   </span>
                 </div>
-                <h3 className="text-gray-400 font-medium mb-1">SEO</h3>
-                <p className="text-3xl font-bold text-white">{overallMetrics.averageSEO}</p>
+                <h3 id="seo-score-label" className="text-gray-400 font-medium mb-1">SEO</h3>
+                <p className="text-3xl font-bold text-white" aria-describedby="seo-score-description">
+                  {overallMetrics.averageSEO}
+                </p>
+                <span id="seo-score-description" className="sr-only">
+                  Average SEO score out of 100
+                </span>
               </div>
-            </div>
+              </div>
+            </section>
           ) : (
             <div className="mt-8 bg-gray-800 border border-gray-700 rounded-2xl p-8 text-center">
               <div className="bg-gray-700 border border-gray-600 p-4 rounded-2xl w-20 h-20 mx-auto mb-4 flex items-center justify-center">
@@ -538,7 +561,7 @@ export default function LighthouseReports() {
             )}
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Apple-Style Reports Section */}
       <section className="bg-gray-900 border border-gray-800 rounded-3xl shadow-2xl overflow-hidden" aria-labelledby="recent-reports-heading">
@@ -744,13 +767,16 @@ export default function LighthouseReports() {
                             <div className="flex items-center space-x-3">
                               <button
                                 onClick={() => toggleReportExpansion(run.run_id, artifact.id)}
-                                className={`px-5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center space-x-2 border shadow-sm ${
+                                className={`px-5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center space-x-2 border shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 ${
                                   isMainReport 
                                     ? (reports.length > 0 
-                                      ? 'bg-green-600 hover:bg-green-500 text-white border-green-500/30 hover:border-green-400/50'
-                                      : 'bg-yellow-600 hover:bg-yellow-500 text-white border-yellow-500/30 hover:border-yellow-400/50')
-                                    : 'bg-blue-600 hover:bg-blue-500 text-white border-blue-500/30 hover:border-blue-400/50'
+                                      ? 'bg-green-600 hover:bg-green-500 text-white border-green-500/30 hover:border-green-400/50 focus:ring-green-500'
+                                      : 'bg-yellow-600 hover:bg-yellow-500 text-white border-yellow-500/30 hover:border-yellow-400/50 focus:ring-yellow-500')
+                                    : 'bg-blue-600 hover:bg-blue-500 text-white border-blue-500/30 hover:border-blue-400/50 focus:ring-blue-500'
                                 }`}
+                                aria-expanded={isExpanded}
+                                aria-controls={`report-content-${run.run_id}-${artifact.id}`}
+                                aria-label={`${isExpanded ? 'Hide' : 'Show'} ${isMainReport ? 'performance scores' : 'workflow execution details'} for ${isMainReport ? 'performance analysis' : 'debug information'}`}
                               >
                                 {isExpanded ? (
                                   <>
@@ -790,7 +816,7 @@ export default function LighthouseReports() {
                           
                           {/* Enhanced Expanded Reports with Score Tracking */}
                           {isExpanded && (
-                            <div className="p-6 border-t border-gray-700 bg-gray-900">
+                            <div id={`report-content-${run.run_id}-${artifact.id}`} className="p-6 border-t border-gray-700 bg-gray-900" role="region" aria-labelledby={`report-content-heading-${run.run_id}-${artifact.id}`}>
                               {reports.length === 0 ? (
                                 <div className="text-center py-8">
                                   {artifactData?.message || artifact.name.includes('lighthouse-summary-') ? (
@@ -993,6 +1019,6 @@ export default function LighthouseReports() {
           )}
         </div>
       </section>
-    </div>
+    </section>
   );
 }
