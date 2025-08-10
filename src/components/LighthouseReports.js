@@ -230,9 +230,9 @@ export default function LighthouseReports() {
                 <Rocket className="w-10 h-10 text-blue-400" />
               </div>
               <div>
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
                   Performance Hub
-                </h1>
+                </h2>
                 <p className="text-gray-300 text-lg max-w-2xl leading-relaxed font-light">
                   Real-time Lighthouse CI monitoring powered by GitHub Actions. 
                   Track performance, accessibility, and SEO across your team.
@@ -245,6 +245,7 @@ export default function LighthouseReports() {
               <button
                 onClick={fetchGithubReports}
                 className="bg-blue-500 hover:bg-blue-400 text-white px-6 py-3 rounded-2xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-3 border border-blue-400/20"
+                aria-label="Refresh Lighthouse reports from GitHub Actions"
                 title="Refresh reports"
               >
                 <TrendingUp className="w-5 h-5" />
@@ -365,14 +366,14 @@ export default function LighthouseReports() {
       </div>
 
       {/* Apple-Style Reports Section */}
-      <div className="bg-gray-900 border border-gray-800 rounded-3xl shadow-2xl overflow-hidden">
+      <section className="bg-gray-900 border border-gray-800 rounded-3xl shadow-2xl overflow-hidden" aria-labelledby="recent-reports-heading">
         <div className="p-8 border-b border-gray-800">
           <div className="flex items-center space-x-3 mb-2">
             <div className="bg-gray-800 border border-gray-700 p-3 rounded-xl">
               <FileText className="w-6 h-6 text-gray-300" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white tracking-tight">
+              <h2 id="recent-reports-heading" className="text-2xl font-bold text-white tracking-tight">
                 Recent Reports
               </h2>
               <p className="text-gray-400 text-base font-light">
@@ -708,7 +709,7 @@ export default function LighthouseReports() {
             })
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

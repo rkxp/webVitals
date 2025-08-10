@@ -412,6 +412,14 @@ export default function WebVitalsApp() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
+      {/* Skip Navigation Link for Accessibility */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded-lg z-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        aria-label="Skip to main content"
+      >
+        Skip to main content
+      </a>
       <Header 
         onOpenSettings={handleOpenSettings} 
         trackedUrls={trackedUrls}
@@ -422,7 +430,7 @@ export default function WebVitalsApp() {
         autoRefreshEnabled={settings.autoRefreshEnabled}
       />
       
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main id="main-content" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-label="Performance Dashboard Content">
         <div className="space-y-12">
           {/* Status Bar */}
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg">
