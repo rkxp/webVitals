@@ -142,6 +142,34 @@ export default function LighthouseReports() {
     return metrics;
   };
 
+  // Calculate score changes between commits for a specific URL
+  const getScoreChange = (currentReport, url, currentRunIndex) => {
+    // Find the previous report for the same URL from a different commit
+    for (let i = currentRunIndex + 1; i < githubReports.length; i++) {
+      const previousRun = githubReports[i];
+      for (const artifact of previousRun.artifacts.filter(a => a.name.includes('lighthouse-reports-'))) {
+        const previousReports = lighthouseData[artifact.id] || [];
+        const previousReport = previousReports.find(r => 
+          r.finalDisplayedUrl === url || r.requestedUrl === url || 
+          r.finalDisplayedUrl === currentReport.finalDisplayedUrl || 
+          r.requestedUrl === currentReport.requestedUrl
+        );
+        if (previousReport) {
+          const currentScore = currentReport.categories.performance.score * 100;
+          const previousScore = previousReport.categories.performance.score * 100;
+          const change = currentScore - previousScore;
+          return {
+            change: Math.round(change * 10) / 10, // Round to 1 decimal
+            previous: Math.round(previousScore),
+            current: Math.round(currentScore),
+            trend: change > 0 ? 'up' : change < 0 ? 'down' : 'same'
+          };
+        }
+      }
+    }
+    return null;
+  };
+
   const overallMetrics = getOverallMetrics();
 
   if (loading) {
@@ -374,39 +402,86 @@ export default function LighthouseReports() {
               </div>
             </div>
           ) : (
-            githubReports.map((run, index) => (
-              <div
-                key={run.run_id}
-                className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-3">
-                    <GitBranch className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                    <div>
-                      <h3 className="font-medium text-gray-900 dark:text-white">
-                        Run #{run.workflow_run_number} - {run.branch}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
-                        <Users className="w-4 h-4 mr-1" />
-                        {run.triggered_by} • {new Date(run.created_at).toLocaleString()}
-                      </p>
+            githubReports.map((run, index) => {
+              const previousRun = index < githubReports.length - 1 ? githubReports[index + 1] : null;
+              
+              return (
+                <div
+                  key={run.run_id}
+                  className="bg-gray-850 border border-gray-700 rounded-xl p-6 hover:bg-gray-800 transition-all duration-200 mb-4 shadow-lg"
+                >
+                  {/* Enhanced Run Header with Commit Details */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start space-x-4">
+                      {/* Status Indicator */}
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 mt-2 shadow-sm ${
+                        run.conclusion === 'success' ? 'bg-green-400 shadow-green-400/50' :
+                        run.conclusion === 'failure' ? 'bg-red-400 shadow-red-400/50' :
+                        'bg-yellow-400 shadow-yellow-400/50'
+                      }`}></div>
+                      
+                      {/* Author Avatar & Details */}
+                      <div className="flex items-start space-x-3">
+                        <img 
+                          src={run.commit_author?.avatar_url || `https://github.com/${run.triggered_by}.png`}
+                          alt={run.commit_author?.name || run.triggered_by}
+                          className="w-10 h-10 rounded-full border-2 border-gray-600 flex-shrink-0"
+                        />
+                        <div>
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h3 className="font-semibold text-white text-lg">
+                              {run.commit_author?.name || run.triggered_by}
+                            </h3>
+                            {run.pr_number && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                PR #{run.pr_number}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Commit Message */}
+                          <p className="text-gray-300 text-sm mb-2 leading-relaxed max-w-2xl">
+                            {run.commit_message?.split('\n')[0] || 'No commit message available'}
+                          </p>
+                          
+                          {/* Commit Meta */}
+                          <div className="flex items-center space-x-4 text-sm text-gray-400">
+                            <span className="flex items-center space-x-1 bg-gray-700/50 px-2 py-1 rounded-md">
+                              <GitBranch className="w-4 h-4" />
+                              <span>{run.branch}</span>
+                            </span>
+                            <span className="flex items-center space-x-1 bg-gray-700/50 px-2 py-1 rounded-md">
+                              <Clock className="w-4 h-4" />
+                              <span>{formatTimestamp(run.created_at)}</span>
+                            </span>
+                            <span className="font-mono text-xs bg-gray-700/50 px-2 py-1 rounded-md">
+                              {run.commit_sha.substring(0, 7)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Workflow Status */}
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-gray-300 mb-1">
+                        Run #{run.workflow_run_number}
+                      </div>
+                      <div className={`text-xs px-2 py-1 rounded-full ${
+                        run.conclusion === 'success' 
+                          ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                          : run.conclusion === 'failure'
+                          ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                          : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                      }`}>
+                        {run.conclusion === 'success' ? '✓ Success' : 
+                         run.conclusion === 'failure' ? '✗ Failed' : '⋯ Running'}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      run.conclusion === 'success' 
-                        ? 'bg-green-100 text-green-800' 
-                        : run.conclusion === 'failure'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {run.conclusion}
-                    </span>
-                  </div>
-                </div>
 
-                {/* Lighthouse Reports */}
-                <div className="space-y-2">
+                {/* Enhanced Lighthouse Reports Section */}
+                <div className="space-y-3">
                   {run.artifacts
                     .filter(artifact => artifact.name.includes('lighthouse-reports-'))
                     .map(artifact => {
@@ -415,21 +490,23 @@ export default function LighthouseReports() {
                       const reports = lighthouseData[artifact.id] || [];
                       
                       return (
-                        <div key={artifact.id} className="border border-gray-200 dark:border-gray-600 rounded-lg">
-                          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-600 rounded-lg">
+                        <div key={artifact.id} className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden hover:border-gray-600 transition-all duration-200">
+                          <div className="flex items-center justify-between p-4 bg-gray-750 hover:bg-gray-700 transition-colors duration-200">
                             <div className="flex items-center space-x-3">
-                              <BarChart3 className="w-4 h-4 text-blue-600" />
+                              <div className="bg-blue-500/20 border border-blue-500/30 p-2 rounded-lg">
+                                <BarChart3 className="w-5 h-5 text-blue-400" />
+                              </div>
                               <div>
-                                <p className="font-medium text-sm">Lighthouse Reports</p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                <p className="font-medium text-white text-base">Lighthouse Reports</p>
+                                <p className="text-sm text-gray-400">
                                   {reports.length > 0 ? `${reports.length} URLs tested` : 'Click to view reports'}
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-3">
                               <button
                                 onClick={() => toggleReportExpansion(run.run_id, artifact.id)}
-                                className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center space-x-1"
+                                className="px-4 py-2 text-sm bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition-all duration-200 flex items-center space-x-2 border border-blue-400/30 hover:border-blue-300/50 shadow-sm"
                               >
                                 <Eye className="w-4 h-4" />
                                 <span>{isExpanded ? 'Hide' : 'View'}</span>
@@ -441,7 +518,7 @@ export default function LighthouseReports() {
                               </button>
                               <a
                                 href={artifact.download_url}
-                                className="text-blue-600 hover:text-blue-700 transition-colors"
+                                className="text-gray-400 hover:text-blue-400 transition-colors duration-200 p-2 bg-gray-700 hover:bg-gray-600 rounded-lg border border-gray-600 hover:border-blue-500/30"
                                 title="Download ZIP"
                               >
                                 <Download className="w-4 h-4" />
@@ -449,88 +526,135 @@ export default function LighthouseReports() {
                             </div>
                           </div>
                           
-                          {/* Expanded Lighthouse Reports */}
+                          {/* Enhanced Expanded Reports with Score Tracking */}
                           {isExpanded && (
-                            <div className="p-4 border-t border-gray-200 dark:border-gray-600">
+                            <div className="p-6 border-t border-gray-700 bg-gray-900">
                               {reports.length === 0 ? (
-                                <div className="text-center py-4">
-                                  <Loader className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
-                                  <p className="text-sm text-gray-600 dark:text-gray-400">Loading Lighthouse reports...</p>
+                                <div className="text-center py-8">
+                                  <Loader className="w-8 h-8 animate-spin mx-auto mb-3 text-blue-400" />
+                                  <p className="text-gray-400">Loading Lighthouse reports...</p>
                                 </div>
                               ) : (
-                                <div className="space-y-4">
-                                  {reports.map((report, reportIndex) => (
-                                    <div key={reportIndex} className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-100 dark:border-gray-600">
-                                      <div className="flex items-center justify-between mb-3">
-                                        <div>
-                                          <h4 className="font-medium text-gray-900 dark:text-white">{report.url}</h4>
-                                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            {new Date(report.timestamp).toLocaleString()}
-                                          </p>
-                                        </div>
-                                      </div>
-                                      
-                                      {/* Performance Scores */}
-                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                                        {Object.entries(report.categories || {}).map(([category, data]) => {
-                                          const score = Math.round(data.score * 100);
-                                          
-                                          return (
-                                            <div
-                                              key={category}
-                                              className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${getScoreColor(score)}`}
-                                            >
-                                              <CategoryIcon category={category} />
-                                              <div>
-                                                <p className="text-xs font-medium capitalize">
-                                                  {category.replace('-', ' ')}
-                                                </p>
-                                                <p className="text-sm font-bold">{score}</p>
-                                              </div>
+                                <div className="space-y-6">
+                                  {reports.map((report, reportIndex) => {
+                                    const scoreChange = getScoreChange(report, report.finalDisplayedUrl || report.requestedUrl, index);
+                                    
+                                    return (
+                                      <div key={reportIndex} className="bg-gray-800 border border-gray-700 rounded-xl p-6 hover:bg-gray-750 transition-all duration-200">
+                                        {/* Report Header with Score Change Tracking */}
+                                        <div className="flex items-start justify-between mb-4">
+                                          <div className="flex-1">
+                                            <div className="flex items-center space-x-3 mb-2">
+                                              <h4 className="font-semibold text-white text-lg">
+                                                {report.finalDisplayedUrl || report.requestedUrl || report.url}
+                                              </h4>
+                                              {scoreChange && (
+                                                <div className={`flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium ${
+                                                  scoreChange.trend === 'up' 
+                                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                                                    : scoreChange.trend === 'down'
+                                                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                                    : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                                                }`}>
+                                                  {scoreChange.trend === 'up' && <TrendingUp className="w-4 h-4" />}
+                                                  {scoreChange.trend === 'down' && <TrendingUp className="w-4 h-4 rotate-180" />}
+                                                  {scoreChange.trend === 'same' && <span>—</span>}
+                                                  <span>{scoreChange.change > 0 ? '+' : ''}{scoreChange.change}</span>
+                                                </div>
+                                              )}
                                             </div>
-                                          );
-                                        })}
-                                      </div>
-                                      
-                                      {/* Core Web Vitals */}
-                                      {report.audits && (
-                                        <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
-                                          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                                            Core Web Vitals
-                                          </p>
-                                          <div className="grid grid-cols-3 gap-3 text-sm">
-                                            {report.audits['largest-contentful-paint'] && (
-                                              <div className="text-center">
-                                                <p className="font-medium">LCP</p>
-                                                <p className="text-gray-600 dark:text-gray-400">
-                                                  {report.audits['largest-contentful-paint'].displayValue || 
-                                                   `${Math.round(report.audits['largest-contentful-paint'].numericValue / 10) / 100}s`}
-                                                </p>
-                                              </div>
-                                            )}
-                                            {report.audits['cumulative-layout-shift'] && (
-                                              <div className="text-center">
-                                                <p className="font-medium">CLS</p>
-                                                <p className="text-gray-600 dark:text-gray-400">
-                                                  {report.audits['cumulative-layout-shift'].displayValue || 
-                                                   Math.round(report.audits['cumulative-layout-shift'].numericValue * 1000) / 1000}
-                                                </p>
-                                              </div>
-                                            )}
-                                            {report.audits['interaction-to-next-paint'] && (
-                                              <div className="text-center">
-                                                <p className="font-medium">INP</p>
-                                                <p className="text-gray-600 dark:text-gray-400">
-                                                  {report.audits['interaction-to-next-paint'].displayValue ||
-                                                   `${Math.round(report.audits['interaction-to-next-paint'].numericValue)}ms`}
-                                                </p>
-                                              </div>
+                                            <p className="text-gray-400 text-sm">
+                                              Tested on {new Date(report.fetchTime).toLocaleString()}
+                                            </p>
+                                            {scoreChange && (
+                                              <p className="text-gray-500 text-xs mt-1">
+                                                Performance: {scoreChange.previous} → {scoreChange.current}
+                                              </p>
                                             )}
                                           </div>
                                         </div>
-                                      )}
-                                    </div>
-                                  ))}
+                                        
+                                        {/* Enhanced Performance Scores */}
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                                          {Object.entries(report.categories || {}).map(([category, data]) => {
+                                            const score = Math.round(data.score * 100);
+                                            
+                                            return (
+                                              <div key={category} className="bg-gray-700 border border-gray-600 rounded-lg p-4 hover:bg-gray-650 transition-colors duration-200">
+                                                <div className="flex items-center space-x-3 mb-2">
+                                                  <div className={`p-2 rounded-lg ${
+                                                    category === 'performance' ? 'bg-orange-500/20 border border-orange-500/30' :
+                                                    category === 'accessibility' ? 'bg-blue-500/20 border border-blue-500/30' :
+                                                    category === 'best-practices' ? 'bg-green-500/20 border border-green-500/30' :
+                                                    'bg-purple-500/20 border border-purple-500/30'
+                                                  }`}>
+                                                    <CategoryIcon category={category} />
+                                                  </div>
+                                                  <div>
+                                                    <p className="text-sm font-medium text-gray-300 capitalize">
+                                                      {category.replace('-', ' ')}
+                                                    </p>
+                                                    <p className="text-2xl font-bold text-white">{score}</p>
+                                                  </div>
+                                                </div>
+                                                <div className={`w-full h-2 rounded-full ${
+                                                  score >= 90 ? 'bg-green-500/30' :
+                                                  score >= 50 ? 'bg-yellow-500/30' : 'bg-red-500/30'
+                                                }`}>
+                                                  <div
+                                                    className={`h-2 rounded-full transition-all duration-500 ${
+                                                      score >= 90 ? 'bg-green-400' :
+                                                      score >= 50 ? 'bg-yellow-400' : 'bg-red-400'
+                                                    }`}
+                                                    style={{ width: `${score}%` }}
+                                                  ></div>
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                        
+                                        {/* Core Web Vitals with Enhanced Styling */}
+                                        {report.audits && (
+                                          <div className="bg-gray-750 border border-gray-600 rounded-lg p-4">
+                                            <h5 className="text-white font-medium mb-3 flex items-center space-x-2">
+                                              <Target className="w-4 h-4 text-blue-400" />
+                                              <span>Core Web Vitals</span>
+                                            </h5>
+                                            <div className="grid grid-cols-3 gap-4">
+                                              {report.audits['largest-contentful-paint'] && (
+                                                <div className="text-center bg-gray-700 rounded-lg p-3 border border-gray-600">
+                                                  <p className="font-medium text-white mb-1">LCP</p>
+                                                  <p className="text-blue-400 font-mono text-sm">
+                                                    {report.audits['largest-contentful-paint'].displayValue || 
+                                                     `${Math.round(report.audits['largest-contentful-paint'].numericValue / 10) / 100}s`}
+                                                  </p>
+                                                </div>
+                                              )}
+                                              {report.audits['cumulative-layout-shift'] && (
+                                                <div className="text-center bg-gray-700 rounded-lg p-3 border border-gray-600">
+                                                  <p className="font-medium text-white mb-1">CLS</p>
+                                                  <p className="text-green-400 font-mono text-sm">
+                                                    {report.audits['cumulative-layout-shift'].displayValue || 
+                                                     Math.round(report.audits['cumulative-layout-shift'].numericValue * 1000) / 1000}
+                                                  </p>
+                                                </div>
+                                              )}
+                                              {report.audits['interaction-to-next-paint'] && (
+                                                <div className="text-center bg-gray-700 rounded-lg p-3 border border-gray-600">
+                                                  <p className="font-medium text-white mb-1">INP</p>
+                                                  <p className="text-orange-400 font-mono text-sm">
+                                                    {report.audits['interaction-to-next-paint'].displayValue ||
+                                                     `${Math.round(report.audits['interaction-to-next-paint'].numericValue)}ms`}
+                                                  </p>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               )}
                             </div>

@@ -42,6 +42,23 @@ export async function GET(request) {
     
     for (const run of workflowRuns.workflow_runs) {
       try {
+        // Fetch commit details for this workflow run
+        const commitResponse = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/commits/${run.head_sha}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'User-Agent': 'WebVitals-Dashboard'
+            }
+          }
+        );
+        
+        let commitData = null;
+        if (commitResponse.ok) {
+          commitData = await commitResponse.json();
+        }
+        
         // Fetch artifacts for this workflow run
         const artifactsResponse = await fetch(
           `https://api.github.com/repos/${owner}/${repo}/actions/runs/${run.id}/artifacts`,
@@ -68,6 +85,13 @@ export async function GET(request) {
               run_id: run.id,
               workflow_run_number: run.run_number,
               commit_sha: run.head_sha,
+              commit_message: commitData?.commit?.message || 'No commit message available',
+              commit_author: {
+                name: commitData?.commit?.author?.name || run.actor.login,
+                email: commitData?.commit?.author?.email || null,
+                username: commitData?.author?.login || run.actor.login,
+                avatar_url: commitData?.author?.avatar_url || run.actor.avatar_url
+              },
               branch: run.head_branch,
               event: run.event,
               status: run.status,

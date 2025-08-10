@@ -335,3 +335,15 @@ p, span, div {
 .hover\:bg-gray-750:hover {
   background-color: rgb(55 65 81);
 }
+
+.bg-gray-850 {
+  background-color: rgb(31 39 51);
+}
+
+.bg-gray-650 {
+  background-color: rgb(75 85 99);
+}
+
+.hover\:bg-gray-650:hover {
+  background-color: rgb(75 85 99);
+}
