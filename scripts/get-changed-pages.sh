@@ -25,6 +25,94 @@ success() {
     echo -e "${GREEN}[LIGHTHOUSE CI]${NC} $1"
 }
 
+# Function to add URL if not already present
+add_url() {
+    local url="$1"
+    if [[ ! " ${URLS[@]} " =~ " ${url} " ]]; then
+        URLS+=("$url")
+    fi
+}
+
+# Function to get routes from component mappings
+get_routes_from_component() {
+    local component_file="$1"
+    local routes=""
+    
+    # Check if component routes map exists
+    if [ ! -f "$COMPONENT_ROUTES_MAP" ]; then
+        warn "Component routes map not found at $COMPONENT_ROUTES_MAP"
+        return
+    fi
+    
+    # Try to find routes for this component
+    if command -v jq >/dev/null 2>&1; then
+        # Get routes for the specific component
+        routes=$(jq -r ".mappings[\"$component_file\"][]?" "$COMPONENT_ROUTES_MAP" 2>/dev/null || echo "")
+        
+        # If no specific mapping, check if it's a global component
+        if [ -z "$routes" ]; then
+            local is_global=$(jq -r ".globalComponents.components[] | select(. == \"$component_file\")" "$COMPONENT_ROUTES_MAP" 2>/dev/null || echo "")
+            if [ -n "$is_global" ]; then
+                log "Component $component_file is global, affecting all pages"
+                # For global components, return the root route
+                routes="/"
+            fi
+        fi
+    else
+        # Fallback without jq - basic pattern matching
+        routes=$(grep -A 5 "\"$component_file\"" "$COMPONENT_ROUTES_MAP" 2>/dev/null | grep -o '"/[^"]*"' | tr -d '"' || echo "")
+        
+        # Check if it's in global components (simplified)
+        if [ -z "$routes" ] && grep -q "\"$component_file\"" "$COMPONENT_ROUTES_MAP" 2>/dev/null; then
+            routes="/"
+        fi
+    fi
+    
+    if [ -n "$routes" ]; then
+        echo "$routes"
+    fi
+}
+
+# Function to replace dynamic route placeholders
+replace_dynamic_routes() {
+    local route="$1"
+    
+    # Check if dynamic routes map exists
+    if [ ! -f "$DYNAMIC_ROUTES_MAP" ]; then
+        warn "Dynamic routes map not found at $DYNAMIC_ROUTES_MAP"
+        echo "$route"
+        return
+    fi
+    
+    # Check if this route has dynamic segments
+    if [[ $route == *"["* ]]; then
+        # Extract the route pattern (remove query params and fragments)
+        local route_pattern=$(echo "$route" | sed 's/[?#].*//')
+        
+        # Try to find mapping in dynamic-routes-map.json
+        local mapped_routes
+        if command -v jq >/dev/null 2>&1; then
+            mapped_routes=$(jq -r ".routes[\"$route_pattern\"][]?" "$DYNAMIC_ROUTES_MAP" 2>/dev/null || echo "")
+        else
+            # Fallback without jq - basic pattern matching
+            mapped_routes=$(grep -A 10 "\"$route_pattern\"" "$DYNAMIC_ROUTES_MAP" 2>/dev/null | grep -o '"/[^"]*"' | tr -d '"' || echo "")
+        fi
+        
+        if [ -n "$mapped_routes" ]; then
+            echo "$mapped_routes"
+        else
+            # Fallback: replace common dynamic patterns
+            route=$(echo "$route" | sed 's/\[id\]/123/g')
+            route=$(echo "$route" | sed 's/\[slug\]/example-slug/g')
+            route=$(echo "$route" | sed 's/\[userId\]/demo-user/g')
+            route=$(echo "$route" | sed 's/\[\.\.\.[^]]*\]/example/g')
+            echo "$route"
+        fi
+    else
+        echo "$route"
+    fi
+}
+
 # Configuration
 BASE_BRANCH="${1:-main}"
 DYNAMIC_ROUTES_MAP="dynamic-routes-map.json"
@@ -115,94 +203,6 @@ fi
 
 # Initialize URL list
 URLS=()
-
-# Function to add URL if not already present
-add_url() {
-    local url="$1"
-    if [[ ! " ${URLS[@]} " =~ " ${url} " ]]; then
-        URLS+=("$url")
-    fi
-}
-
-# Function to get routes from component mappings
-get_routes_from_component() {
-    local component_file="$1"
-    local routes=""
-    
-    # Check if component routes map exists
-    if [ ! -f "$COMPONENT_ROUTES_MAP" ]; then
-        warn "Component routes map not found at $COMPONENT_ROUTES_MAP"
-        return
-    fi
-    
-    # Try to find routes for this component
-    if command -v jq >/dev/null 2>&1; then
-        # Get routes for the specific component
-        routes=$(jq -r ".mappings[\"$component_file\"][]?" "$COMPONENT_ROUTES_MAP" 2>/dev/null || echo "")
-        
-        # If no specific mapping, check if it's a global component
-        if [ -z "$routes" ]; then
-            local is_global=$(jq -r ".globalComponents.components[] | select(. == \"$component_file\")" "$COMPONENT_ROUTES_MAP" 2>/dev/null || echo "")
-            if [ -n "$is_global" ]; then
-                log "Component $component_file is global, affecting all pages"
-                # For global components, return the root route
-                routes="/"
-            fi
-        fi
-    else
-        # Fallback without jq - basic pattern matching
-        routes=$(grep -A 5 "\"$component_file\"" "$COMPONENT_ROUTES_MAP" 2>/dev/null | grep -o '"/[^"]*"' | tr -d '"' || echo "")
-        
-        # Check if it's in global components (simplified)
-        if [ -z "$routes" ] && grep -q "\"$component_file\"" "$COMPONENT_ROUTES_MAP" 2>/dev/null; then
-            routes="/"
-        fi
-    fi
-    
-    if [ -n "$routes" ]; then
-        echo "$routes"
-    fi
-}
-
-# Function to replace dynamic route placeholders
-replace_dynamic_routes() {
-    local route="$1"
-    
-    # Check if dynamic routes map exists
-    if [ ! -f "$DYNAMIC_ROUTES_MAP" ]; then
-        warn "Dynamic routes map not found at $DYNAMIC_ROUTES_MAP"
-        echo "$route"
-        return
-    fi
-    
-    # Check if this route has dynamic segments
-    if [[ $route == *"["* ]]; then
-        # Extract the route pattern (remove query params and fragments)
-        local route_pattern=$(echo "$route" | sed 's/[?#].*//')
-        
-        # Try to find mapping in dynamic-routes-map.json
-        local mapped_routes
-        if command -v jq >/dev/null 2>&1; then
-            mapped_routes=$(jq -r ".routes[\"$route_pattern\"][]?" "$DYNAMIC_ROUTES_MAP" 2>/dev/null || echo "")
-        else
-            # Fallback without jq - basic pattern matching
-            mapped_routes=$(grep -A 10 "\"$route_pattern\"" "$DYNAMIC_ROUTES_MAP" 2>/dev/null | grep -o '"/[^"]*"' | tr -d '"' || echo "")
-        fi
-        
-        if [ -n "$mapped_routes" ]; then
-            echo "$mapped_routes"
-        else
-            # Fallback: replace common dynamic patterns
-            route=$(echo "$route" | sed 's/\[id\]/123/g')
-            route=$(echo "$route" | sed 's/\[slug\]/example-slug/g')
-            route=$(echo "$route" | sed 's/\[userId\]/demo-user/g')
-            route=$(echo "$route" | sed 's/\[\.\.\.[^]]*\]/example/g')
-            echo "$route"
-        fi
-    else
-        echo "$route"
-    fi
-}
 
 # Process different Next.js structures
 log "Processing route manifests..."
