@@ -164,10 +164,18 @@ echo "$CHANGED_FILES" | sed 's/^/  - /' >&2
 # Filter for page-related files
 PAGE_RELATED_FILES=$(echo "$CHANGED_FILES" | grep -E '^(src/)?(pages|app|components)/' || true)
 
-if [ -z "$PAGE_RELATED_FILES" ]; then
-    warn "No page-related files changed (pages/, app/, components/)"
+# Also check for workflow/script changes that should trigger a test
+WORKFLOW_FILES=$(echo "$CHANGED_FILES" | grep -E '^(\.github/workflows/|scripts/|.*lighthouse|.*routes-map)' || true)
+
+if [ -z "$PAGE_RELATED_FILES" ] && [ -z "$WORKFLOW_FILES" ]; then
+    warn "No page-related or workflow files changed"
     echo "" >&2
     exit 0
+fi
+
+if [ -z "$PAGE_RELATED_FILES" ] && [ -n "$WORKFLOW_FILES" ]; then
+    log "Workflow/script files changed, testing homepage as fallback"
+    PAGE_RELATED_FILES=""  # Will trigger homepage testing
 fi
 
 log "Page-related changed files:"
@@ -202,19 +210,33 @@ while IFS= read -r file; do
     fi
 done <<< "$PAGE_RELATED_FILES"
 
-# Build the app to generate manifests
-log "Building Next.js app to generate route manifests..."
-if ! npm run build > /dev/null 2>&1; then
-    warn "Build failed, falling back to basic route detection"
-    # Fallback: just return the root page
-    echo "$BASE_URL"
-    exit 0
+# Build the app to generate manifests (unless skipped)
+if [ "$SKIP_BUILD" = "1" ]; then
+    warn "Skipping build step (SKIP_BUILD=1), using component mappings only"
+    # We already processed components above, so if we have URLs, use them
+    if [ ${#URLS[@]} -gt 0 ]; then
+        log "Using URLs from component mappings"
+    else
+        log "No component mappings found, defaulting to homepage"
+        add_url "$BASE_URL"
+    fi
+else
+    log "Building Next.js app to generate route manifests..."
+    if ! npm run build > /dev/null 2>&1; then
+        warn "Build failed, falling back to component mappings"
+        # If we have URLs from components, use them; otherwise default to homepage
+        if [ ${#URLS[@]} -eq 0 ]; then
+            add_url "$BASE_URL"
+        fi
+    else
+        log "Build successful, processing manifests..."
+        # Continue with manifest processing (existing code below)
+    fi
 fi
 
-# Initialize URL list
-URLS=()
-
-# Process different Next.js structures
+# Only continue with manifest processing if build was successful and not skipped
+if [ "$SKIP_BUILD" != "1" ] && [ -d ".next/server" ]; then
+    # Process different Next.js structures
 log "Processing route manifests..."
 
 # Check for App Router (Next.js 13+)
@@ -354,6 +376,8 @@ if [ ${#URLS[@]} -eq 0 ]; then
         
     done <<< "$PAGE_RELATED_FILES"
 fi
+
+fi  # End of manifest processing conditional
 
 # Remove duplicates and sort
 UNIQUE_URLS=($(printf '%s\n' "${URLS[@]}" | sort -u))
