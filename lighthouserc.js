@@ -6,8 +6,8 @@ module.exports = {
         process.env.LIGHTHOUSE_URLS.split(' ').filter(Boolean) : 
         [process.env.PRODUCTION_URL || 'https://webvitals.contentstackapps.com/'].filter(Boolean),
       
-      // Lighthouse collection settings
-      numberOfRuns: 3,
+      // Lighthouse collection settings  
+      numberOfRuns: 1, // Single run for faster CI (was 3)
       settings: {
         chromeFlags: '--no-sandbox --disable-dev-shm-usage --headless',
         preset: 'desktop', // or 'mobile'
@@ -32,9 +32,8 @@ module.exports = {
     },
     
     upload: {
-      // Save reports locally for dashboard integration
-      target: 'filesystem',
-      outputDir: './public/lighthouse-reports'
+      // Use temporary public storage for GitHub Actions CI
+      target: 'temporary-public-storage'
     }
   }
 };

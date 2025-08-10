@@ -51,7 +51,7 @@ env:
 jobs:
   # Job for Pull Request and Push - test only changed pages
   lighthouse-pr:
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     name: Lighthouse CI (Changed Pages - ${{ github.event_name }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -121,8 +121,9 @@ jobs:
         env:
           LIGHTHOUSE_URLS: ${{ steps.changed-pages.outputs.urls }}
         run: |
-          echo "Running Lighthouse CI on URLs: $LIGHTHOUSE_URLS"
-          npx lhci autorun
+          echo "🚀 Running Lighthouse CI on URLs: $LIGHTHOUSE_URLS"
+          echo "📊 Configuration: Single run per URL for faster CI"
+          npx lhci autorun --no-logs-collection
           
       - name: Upload Lighthouse reports as artifacts
         if: steps.changed-pages.outputs.skip != 'true' && always()
@@ -253,11 +254,12 @@ jobs:
           LIGHTHOUSE_URLS: ${{ github.event.inputs.urls }}
         run: |
           if [ -n "$LIGHTHOUSE_URLS" ]; then
-            echo "Running Lighthouse CI on custom URLs: $LIGHTHOUSE_URLS"
+            echo "🚀 Running Lighthouse CI on custom URLs: $LIGHTHOUSE_URLS"
           else
-            echo "Running Lighthouse CI on all configured URLs"
+            echo "🚀 Running Lighthouse CI on all configured URLs"
           fi
-          npx lhci autorun
+          echo "📊 Configuration: Single run per URL for faster CI"
+          npx lhci autorun --no-logs-collection
           
       - name: Upload Lighthouse reports
         if: always()
