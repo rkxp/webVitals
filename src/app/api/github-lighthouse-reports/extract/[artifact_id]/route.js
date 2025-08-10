@@ -40,10 +40,20 @@ export async function GET(request, { params }) {
     const lighthouseReports = [];
     
     // Extract Lighthouse JSON reports
+    console.log('🔍 Processing ZIP entries:', zipEntries.map(e => e.entryName));
+    
     zipEntries.forEach(entry => {
-      if (entry.entryName.includes('public/lighthouse-reports/') && 
-          entry.entryName.endsWith('.json') &&
-          !entry.entryName.includes('manifest.json')) {
+      console.log('📂 Processing entry:', entry.entryName);
+      
+      // Check for both the new .lighthouseci structure and old public/lighthouse-reports structure
+      const isLighthouseReport = (
+        (entry.entryName.includes('.lighthouseci/') && entry.entryName.endsWith('.json')) ||
+        (entry.entryName.includes('public/lighthouse-reports/') && entry.entryName.endsWith('.json')) ||
+        (entry.entryName.includes('lighthouse-artifacts/') && entry.entryName.endsWith('.json'))
+      ) && !entry.entryName.includes('manifest.json') && !entry.entryName.includes('workflow-metadata.json');
+      
+      if (isLighthouseReport) {
+        console.log('✅ Found Lighthouse report:', entry.entryName);
         
         try {
           const content = entry.getData().toString('utf8');
@@ -105,6 +115,38 @@ export async function GET(request, { params }) {
         }
       }
     });
+    
+    console.log(`📊 Extracted ${lighthouseReports.length} Lighthouse reports`);
+    
+    // If no reports found, check for workflow metadata to explain why
+    if (lighthouseReports.length === 0) {
+      const metadataEntry = zipEntries.find(entry => 
+        entry.entryName.includes('workflow-metadata.json')
+      );
+      
+      let metadata = null;
+      if (metadataEntry) {
+        try {
+          const metadataContent = metadataEntry.getData().toString('utf8');
+          metadata = JSON.parse(metadataContent);
+          console.log('📋 Found workflow metadata:', metadata);
+        } catch (err) {
+          console.error('Error parsing metadata:', err);
+        }
+      }
+      
+      return NextResponse.json({
+        success: true,
+        artifact_id,
+        reports: [],
+        report_count: 0,
+        metadata,
+        message: metadata ? 
+          'Workflow run was skipped or did not generate Lighthouse reports' : 
+          'No Lighthouse reports found in artifact',
+        zip_contents: zipEntries.map(e => e.entryName)
+      });
+    }
     
     return NextResponse.json({
       success: true,

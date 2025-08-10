@@ -120,20 +120,33 @@ export default function LighthouseReports() {
 
   const loadLighthouseData = async (artifactId) => {
     try {
+      console.log('🔍 Loading Lighthouse data for artifact:', artifactId);
       const response = await fetch(`/api/github-lighthouse-reports/extract/${artifactId}`);
+      
+      console.log('📡 Extract API response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('📊 Extract API response data:', data);
+        
+        // Store both reports and metadata
         setLighthouseData(prev => ({
           ...prev,
-          [artifactId]: data.reports || []
+          [artifactId]: {
+            reports: data.reports || [],
+            metadata: data.metadata,
+            message: data.message,
+            zipContents: data.zip_contents
+          }
         }));
         return data.reports || [];
       } else {
-        console.error('Failed to extract Lighthouse data');
+        const errorData = await response.text();
+        console.error('❌ Failed to extract Lighthouse data:', response.status, errorData);
         return [];
       }
     } catch (err) {
-      console.error('Error loading Lighthouse data:', err);
+      console.error('💥 Error loading Lighthouse data:', err);
       return [];
     }
   };
@@ -229,7 +242,8 @@ export default function LighthouseReports() {
     for (let i = currentRunIndex + 1; i < githubReports.length; i++) {
       const previousRun = githubReports[i];
       for (const artifact of previousRun.artifacts.filter(a => a.name.includes('lighthouse-reports-'))) {
-        const previousReports = lighthouseData[artifact.id] || [];
+        const previousData = lighthouseData[artifact.id];
+        const previousReports = previousData?.reports || previousData || [];
         const previousReport = previousReports.find(r => 
           r.finalDisplayedUrl === url || r.requestedUrl === url || 
           r.finalDisplayedUrl === currentReport.finalDisplayedUrl || 
@@ -644,7 +658,8 @@ export default function LighthouseReports() {
                     .map(artifact => {
                       const reportKey = `${run.run_id}-${artifact.id}`;
                       const isExpanded = expandedReports.has(reportKey);
-                      const reports = lighthouseData[artifact.id] || [];
+                      const artifactData = lighthouseData[artifact.id];
+                      const reports = artifactData?.reports || artifactData || [];
                       
                       return (
                         <div key={artifact.id} className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden hover:border-gray-600 transition-all duration-200">
@@ -695,21 +710,53 @@ export default function LighthouseReports() {
                             <div className="p-6 border-t border-gray-700 bg-gray-900">
                               {reports.length === 0 ? (
                                 <div className="text-center py-8">
-                                  {artifact.name.includes('lighthouse-summary-') ? (
+                                  {artifactData?.message || artifact.name.includes('lighthouse-summary-') ? (
                                     <div>
                                       <div className="bg-gray-800 border border-gray-700 p-4 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                                         <FileText className="w-8 h-8 text-blue-400" />
                                       </div>
-                                      <h4 className="text-white font-medium mb-2">Workflow Summary</h4>
+                                      <h4 className="text-white font-medium mb-2">
+                                        {artifactData?.message ? 'No Reports Available' : 'Workflow Summary'}
+                                      </h4>
                                       <p className="text-gray-400 mb-4">
-                                        This workflow run was skipped or did not generate detailed Lighthouse reports.
+                                        {artifactData?.message || 'This workflow run was skipped or did not generate detailed Lighthouse reports.'}
                                       </p>
+                                      
+                                      {artifactData?.metadata && (
+                                        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 max-w-md mx-auto mb-4 text-left">
+                                          <h5 className="text-white font-medium mb-2">Workflow Details:</h5>
+                                          <div className="text-sm text-gray-400 space-y-1">
+                                            {artifactData.metadata.lighthouse_exit_code && (
+                                              <div>Exit Code: <span className="text-blue-400">{artifactData.metadata.lighthouse_exit_code}</span></div>
+                                            )}
+                                            {artifactData.metadata.urls_tested && (
+                                              <div>URLs Tested: <span className="text-blue-400">{artifactData.metadata.urls_tested}</span></div>
+                                            )}
+                                            {artifactData.metadata.triggered_by && (
+                                              <div>Triggered By: <span className="text-blue-400">{artifactData.metadata.triggered_by}</span></div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+                                      
+                                      {artifactData?.zipContents && (
+                                        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 max-w-md mx-auto mb-4">
+                                          <h5 className="text-white font-medium mb-2">Artifact Contents:</h5>
+                                          <div className="text-xs text-gray-500 max-h-32 overflow-y-auto">
+                                            {artifactData.zipContents.map((file, idx) => (
+                                              <div key={idx}>{file}</div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      
                                       <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 max-w-md mx-auto">
                                         <h5 className="text-white font-medium mb-2">Possible Reasons:</h5>
                                         <ul className="text-sm text-gray-400 space-y-1 text-left">
                                           <li>• No page-related changes detected</li>
                                           <li>• Workflow was cancelled or failed early</li>
                                           <li>• Only configuration files were modified</li>
+                                          <li>• Lighthouse CI assertion failures</li>
                                         </ul>
                                       </div>
                                     </div>
