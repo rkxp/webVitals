@@ -117,6 +117,7 @@ jobs:
           done
           
       - name: Run Lighthouse CI
+        id: lighthouse-ci
         if: steps.changed-pages.outputs.skip != 'true'
         env:
           LIGHTHOUSE_URLS: ${{ steps.changed-pages.outputs.urls }}
@@ -129,23 +130,22 @@ jobs:
           echo "   - Best Practices: ≥70%"
           echo "   - SEO: ≥70%"
           echo ""
-          npx lhci autorun --no-logs-collection
           
-      - name: Handle Lighthouse CI failure
-        if: failure() && steps.changed-pages.outputs.skip != 'true'
-        run: |
-          echo "❌ Lighthouse CI failed - Quality gates not met!"
-          echo ""
-          echo "🚫 This PR cannot be merged until performance scores improve."
-          echo ""
-          echo "📈 Required minimum scores:"
-          echo "   • Performance: ≥60%"
-          echo "   • Accessibility: ≥80%"
-          echo "   • Best Practices: ≥70%"
-          echo "   • SEO: ≥70%"
-          echo ""
-          echo "💡 Check the Lighthouse reports above for specific issues to fix."
-          exit 1
+          # Run Lighthouse CI and capture exit code, but don't fail immediately
+          set +e  # Don't exit on error
+          npx lhci autorun --no-logs-collection
+          LIGHTHOUSE_EXIT_CODE=$?
+          set -e  # Re-enable exit on error
+          
+          # Store the exit code for later use
+          echo "lighthouse_exit_code=$LIGHTHOUSE_EXIT_CODE" >> $GITHUB_OUTPUT
+          
+          if [ $LIGHTHOUSE_EXIT_CODE -eq 0 ]; then
+            echo "✅ Lighthouse CI passed all quality gates!"
+          else
+            echo "❌ Lighthouse CI failed quality gates (exit code: $LIGHTHOUSE_EXIT_CODE)"
+            echo "📊 Reports will still be generated and uploaded for analysis"
+          fi
           
       - name: Upload Lighthouse reports as artifacts
         if: steps.changed-pages.outputs.skip != 'true' && always()
@@ -221,6 +221,25 @@ jobs:
               body: body
             });
             
+      - name: Fail job if Lighthouse CI failed (after artifacts uploaded)
+        if: steps.changed-pages.outputs.skip != 'true' && steps.lighthouse-ci.outputs.lighthouse_exit_code != '0'
+        run: |
+          echo "❌ Lighthouse CI failed - Quality gates not met!"
+          echo ""
+          echo "🚫 This PR cannot be merged until performance scores improve."
+          echo ""
+          echo "📈 Required minimum scores:"
+          echo "   • Performance: ≥60%"
+          echo "   • Accessibility: ≥80%"
+          echo "   • Best Practices: ≥70%"
+          echo "   • SEO: ≥70%"
+          echo ""
+          echo "📊 Lighthouse reports have been uploaded as artifacts for analysis."
+          echo "💡 Check your dashboard at http://localhost:3000 to see detailed results."
+          echo ""
+          echo "🔍 You can also check the Lighthouse reports in the 'Artifacts' section above."
+          exit 1
+            
       - name: Skip notification
         if: steps.changed-pages.outputs.skip == 'true'
         run: |
@@ -279,6 +298,7 @@ jobs:
           done
           
       - name: Run full Lighthouse CI audit
+        id: lighthouse-ci-full
         env:
           LIGHTHOUSE_URLS: ${{ github.event.inputs.urls }}
         run: |
@@ -294,7 +314,22 @@ jobs:
           echo "   - Best Practices: ≥70%"
           echo "   - SEO: ≥70%"
           echo ""
+          
+          # Run Lighthouse CI and capture exit code, but don't fail immediately
+          set +e  # Don't exit on error
           npx lhci autorun --no-logs-collection
+          LIGHTHOUSE_EXIT_CODE=$?
+          set -e  # Re-enable exit on error
+          
+          # Store the exit code for later use
+          echo "lighthouse_exit_code=$LIGHTHOUSE_EXIT_CODE" >> $GITHUB_OUTPUT
+          
+          if [ $LIGHTHOUSE_EXIT_CODE -eq 0 ]; then
+            echo "✅ Full Lighthouse CI audit passed all quality gates!"
+          else
+            echo "❌ Full Lighthouse CI audit failed quality gates (exit code: $LIGHTHOUSE_EXIT_CODE)"
+            echo "📊 Reports will still be generated and uploaded for analysis"
+          fi
           
       - name: Upload Lighthouse reports
         if: always()
@@ -305,6 +340,21 @@ jobs:
             public/lighthouse-reports/
             .lighthouseci/
           retention-days: 30
+          
+      - name: Fail job if full Lighthouse CI failed (after artifacts uploaded)
+        if: steps.lighthouse-ci-full.outputs.lighthouse_exit_code != '0'
+        run: |
+          echo "❌ Full Lighthouse CI audit failed - Quality gates not met!"
+          echo ""
+          echo "📈 Performance standards not maintained:"
+          echo "   • Performance: ≥60%"
+          echo "   • Accessibility: ≥80%"
+          echo "   • Best Practices: ≥70%"
+          echo "   • SEO: ≥70%"
+          echo ""
+          echo "📊 Lighthouse reports have been uploaded as artifacts for analysis."
+          echo "🔍 Check the 'Artifacts' section above for detailed reports."
+          exit 1
           
       - name: Create issue on failure
         if: failure() && github.event_name == 'schedule'
