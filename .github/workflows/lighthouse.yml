@@ -123,7 +123,29 @@ jobs:
         run: |
           echo "🚀 Running Lighthouse CI on URLs: $LIGHTHOUSE_URLS"
           echo "📊 Configuration: Single run per URL for faster CI"
+          echo "⚠️  Quality Gates: CI will FAIL if scores are below thresholds"
+          echo "   - Performance: ≥60%"
+          echo "   - Accessibility: ≥80%"
+          echo "   - Best Practices: ≥70%"
+          echo "   - SEO: ≥70%"
+          echo ""
           npx lhci autorun --no-logs-collection
+          
+      - name: Handle Lighthouse CI failure
+        if: failure() && steps.changed-pages.outputs.skip != 'true'
+        run: |
+          echo "❌ Lighthouse CI failed - Quality gates not met!"
+          echo ""
+          echo "🚫 This PR cannot be merged until performance scores improve."
+          echo ""
+          echo "📈 Required minimum scores:"
+          echo "   • Performance: ≥60%"
+          echo "   • Accessibility: ≥80%"
+          echo "   • Best Practices: ≥70%"
+          echo "   • SEO: ≥70%"
+          echo ""
+          echo "💡 Check the Lighthouse reports above for specific issues to fix."
+          exit 1
           
       - name: Upload Lighthouse reports as artifacts
         if: steps.changed-pages.outputs.skip != 'true' && always()
@@ -181,8 +203,15 @@ jobs:
             
             ${urls.map(url => `- ${url}`).join('\n')}
             
+            ### 🚦 Quality Gates (Required for Merge)
+            - **Performance:** ≥60%
+            - **Accessibility:** ≥80%
+            - **Best Practices:** ≥70%
+            - **SEO:** ≥70%
+            
             Check the **Checks** tab above for detailed results and performance metrics.
             
+            > ⚠️ **Important:** This PR will be blocked from merging if any quality gate fails.
             > 💡 This analysis only covers pages affected by your changes. A full site audit runs nightly.`;
             
             github.rest.issues.createComment({
@@ -259,6 +288,12 @@ jobs:
             echo "🚀 Running Lighthouse CI on all configured URLs"
           fi
           echo "📊 Configuration: Single run per URL for faster CI"
+          echo "⚠️  Quality Gates: Performance monitoring thresholds enforced"
+          echo "   - Performance: ≥60%"
+          echo "   - Accessibility: ≥80%"
+          echo "   - Best Practices: ≥70%"
+          echo "   - SEO: ≥70%"
+          echo ""
           npx lhci autorun --no-logs-collection
           
       - name: Upload Lighthouse reports
