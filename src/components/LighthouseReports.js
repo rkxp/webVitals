@@ -187,109 +187,148 @@ export default function LighthouseReports() {
 
 
   return (
-    <div className="space-y-6">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg overflow-hidden">
-        <div className="p-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <div className="bg-blue-500 p-3 rounded-xl">
-                <Rocket className="w-8 h-8 text-white" />
+    <div className="space-y-8">
+      {/* Modern Hero Section */}
+      <div className="relative bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 rounded-3xl shadow-2xl overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-black bg-opacity-10"></div>
+        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+        
+        <div className="relative p-8 md:p-12">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            {/* Hero Content */}
+            <div className="flex items-start space-x-4">
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-2xl">
+                <Rocket className="w-10 h-10 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  Performance Monitoring
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
+                  Performance Hub
                 </h1>
-                <p className="text-gray-600 dark:text-gray-300 mt-1">
-                  Automated Lighthouse CI reports from your team's GitHub Actions
+                <p className="text-purple-100 text-lg max-w-2xl leading-relaxed">
+                  Real-time Lighthouse CI monitoring powered by GitHub Actions. 
+                  Track performance, accessibility, and SEO across your team.
                 </p>
               </div>
             </div>
-            <button
-              onClick={fetchGithubReports}
-              className="bg-white dark:bg-gray-700 px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center space-x-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-              title="Refresh GitHub reports"
-            >
-              <TrendingUp className="w-5 h-5" />
-              <span className="font-medium">Refresh</span>
-            </button>
+            
+            {/* Action Button */}
+            <div className="flex-shrink-0">
+              <button
+                onClick={fetchGithubReports}
+                className="bg-white text-purple-600 px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-3"
+                title="Refresh reports"
+              >
+                <TrendingUp className="w-5 h-5" />
+                <span>Refresh Data</span>
+              </button>
+            </div>
           </div>
 
-          {/* Performance Overview Cards */}
+          {/* Modern Performance Cards */}
           {overallMetrics ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${getScoreColor(overallMetrics.averagePerformance)}`}>
-                    <Zap className="w-5 h-5" />
+            <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Performance Card */}
+              <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-6 border border-white border-opacity-30 hover:bg-opacity-100 transition-all duration-300">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="bg-gradient-to-br from-orange-400 to-red-500 p-3 rounded-xl">
+                    <Zap className="w-6 h-6 text-white" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Performance</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{overallMetrics.averagePerformance}</p>
-                  </div>
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                    overallMetrics.averagePerformance >= 90 ? 'bg-green-100 text-green-700' :
+                    overallMetrics.averagePerformance >= 50 ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    {overallMetrics.averagePerformance >= 90 ? 'Great' : overallMetrics.averagePerformance >= 50 ? 'Good' : 'Poor'}
+                  </span>
                 </div>
+                <h3 className="text-gray-600 font-medium mb-1">Performance</h3>
+                <p className="text-3xl font-bold text-gray-900">{overallMetrics.averagePerformance}</p>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${getScoreColor(overallMetrics.averageAccessibility)}`}>
-                    <Accessibility className="w-5 h-5" />
+
+              {/* Accessibility Card */}
+              <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-6 border border-white border-opacity-30 hover:bg-opacity-100 transition-all duration-300">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="bg-gradient-to-br from-blue-400 to-indigo-500 p-3 rounded-xl">
+                    <Accessibility className="w-6 h-6 text-white" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Accessibility</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{overallMetrics.averageAccessibility}</p>
-                  </div>
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                    overallMetrics.averageAccessibility >= 90 ? 'bg-green-100 text-green-700' :
+                    overallMetrics.averageAccessibility >= 50 ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    {overallMetrics.averageAccessibility >= 90 ? 'Great' : overallMetrics.averageAccessibility >= 50 ? 'Good' : 'Poor'}
+                  </span>
                 </div>
+                <h3 className="text-gray-600 font-medium mb-1">Accessibility</h3>
+                <p className="text-3xl font-bold text-gray-900">{overallMetrics.averageAccessibility}</p>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${getScoreColor(overallMetrics.averageBestPractices)}`}>
-                    <CheckCircle className="w-5 h-5" />
+
+              {/* Best Practices Card */}
+              <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-6 border border-white border-opacity-30 hover:bg-opacity-100 transition-all duration-300">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="bg-gradient-to-br from-green-400 to-emerald-500 p-3 rounded-xl">
+                    <CheckCircle className="w-6 h-6 text-white" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Best Practices</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{overallMetrics.averageBestPractices}</p>
-                  </div>
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                    overallMetrics.averageBestPractices >= 90 ? 'bg-green-100 text-green-700' :
+                    overallMetrics.averageBestPractices >= 50 ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    {overallMetrics.averageBestPractices >= 90 ? 'Great' : overallMetrics.averageBestPractices >= 50 ? 'Good' : 'Poor'}
+                  </span>
                 </div>
+                <h3 className="text-gray-600 font-medium mb-1">Best Practices</h3>
+                <p className="text-3xl font-bold text-gray-900">{overallMetrics.averageBestPractices}</p>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${getScoreColor(overallMetrics.averageSEO)}`}>
-                    <Globe className="w-5 h-5" />
+
+              {/* SEO Card */}
+              <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-6 border border-white border-opacity-30 hover:bg-opacity-100 transition-all duration-300">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="bg-gradient-to-br from-purple-400 to-pink-500 p-3 rounded-xl">
+                    <Globe className="w-6 h-6 text-white" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">SEO</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{overallMetrics.averageSEO}</p>
-                  </div>
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                    overallMetrics.averageSEO >= 90 ? 'bg-green-100 text-green-700' :
+                    overallMetrics.averageSEO >= 50 ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    {overallMetrics.averageSEO >= 90 ? 'Great' : overallMetrics.averageSEO >= 50 ? 'Good' : 'Poor'}
+                  </span>
                 </div>
+                <h3 className="text-gray-600 font-medium mb-1">SEO</h3>
+                <p className="text-3xl font-bold text-gray-900">{overallMetrics.averageSEO}</p>
               </div>
             </div>
           ) : (
-            <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 text-center">
-              <Target className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Ready for Performance Monitoring
+            <div className="mt-8 bg-white bg-opacity-60 backdrop-blur-sm rounded-2xl p-8 text-center border border-white border-opacity-40">
+              <div className="bg-gradient-to-br from-indigo-400 to-purple-500 p-4 rounded-2xl w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                <Target className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                Ready to Monitor Performance
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Push code changes to trigger Lighthouse CI and see your performance metrics here
+              <p className="text-purple-100 text-base leading-relaxed max-w-md mx-auto">
+                Push code changes to trigger automated Lighthouse CI and see your team's performance metrics
               </p>
             </div>
           )}
 
-          {/* Quick Stats */}
-          <div className="flex flex-wrap items-center gap-6 text-sm">
-            <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
-              <GitBranch className="w-4 h-4" />
-              <span>{githubReports.length} workflow runs</span>
+          {/* Enhanced Stats Bar */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-8 text-white">
+            <div className="flex items-center space-x-3 bg-white bg-opacity-20 px-4 py-2 rounded-full backdrop-blur-sm">
+              <GitBranch className="w-5 h-5" />
+              <span className="font-semibold">{githubReports.length} Workflow Runs</span>
             </div>
             {overallMetrics && (
               <>
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
-                  <BarChart3 className="w-4 h-4" />
-                  <span>{overallMetrics.totalReports} performance reports</span>
+                <div className="flex items-center space-x-3 bg-white bg-opacity-20 px-4 py-2 rounded-full backdrop-blur-sm">
+                  <BarChart3 className="w-5 h-5" />
+                  <span className="font-semibold">{overallMetrics.totalReports} Reports</span>
                 </div>
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
-                  <Award className="w-4 h-4" />
-                  <span>Last {overallMetrics.recentRuns} runs analyzed</span>
+                <div className="flex items-center space-x-3 bg-white bg-opacity-20 px-4 py-2 rounded-full backdrop-blur-sm">
+                  <Award className="w-5 h-5" />
+                  <span className="font-semibold">{overallMetrics.recentRuns} Recent</span>
                 </div>
               </>
             )}
@@ -297,29 +336,42 @@ export default function LighthouseReports() {
         </div>
       </div>
 
-      {/* Detailed Reports Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Recent Performance Reports
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Automated Lighthouse audits from GitHub Actions workflow runs
-          </p>
+      {/* Clean Reports Section */}
+      <div className="bg-white rounded-3xl shadow-xl border border-gray-100">
+        <div className="p-8 border-b border-gray-100">
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="bg-gradient-to-br from-slate-600 to-gray-700 p-3 rounded-xl">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Recent Reports
+              </h2>
+              <p className="text-gray-500 text-base">
+                Latest Lighthouse audits from your team's GitHub Actions
+              </p>
+            </div>
+          </div>
         </div>
 
       {/* GitHub Actions Reports */}
-        <div className="space-y-4">
+        <div className="p-8">
           {githubReports.length === 0 ? (
-            <div className="text-center py-8">
-              <GitBranch className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                No GitHub Actions Lighthouse reports found. 
-                Make sure your GitHub token is configured and workflows have run.
+            <div className="text-center py-16">
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 p-6 rounded-3xl w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                <GitBranch className="w-12 h-12 text-gray-500" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                No Reports Yet
+              </h3>
+              <p className="text-gray-600 mb-4 text-base leading-relaxed max-w-md mx-auto">
+                GitHub Actions Lighthouse reports will appear here when your team pushes code changes.
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500">
-                Reports will appear here when team members push changes that trigger Lighthouse CI.
-              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 max-w-lg mx-auto">
+                <p className="text-blue-800 text-sm">
+                  💡 <strong>Tip:</strong> Make sure your GitHub token is configured and workflows are running
+                </p>
+              </div>
             </div>
           ) : (
             githubReports.map((run, index) => (
