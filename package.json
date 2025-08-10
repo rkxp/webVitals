@@ -7,12 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "monitor": "node .github/scripts/web-vitals-monitor.js",
     "lighthouse": "npx lighthouse",
-    "lighthouse:ci": "npx lhci autorun",
-    "performance:test": ".github/scripts/setup-dependencies.sh && npm run monitor && npm run lighthouse:ci",
-    "performance:analyze": "npx lighthouse --only-categories=performance --chrome-flags='--headless'",
-    "setup:monitoring": ".github/scripts/setup-dependencies.sh"
+    "lighthouse:ci": "npx lhci autorun"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
