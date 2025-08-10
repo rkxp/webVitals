@@ -75,6 +75,35 @@ fi
 log "Page-related changed files:"
 echo "$PAGE_RELATED_FILES" | sed 's/^/  - /'
 
+# Process component files immediately to get their routes
+log "Processing component files for route mapping..."
+while IFS= read -r file; do
+    if [ -z "$file" ]; then continue; fi
+    
+    # Handle component, lib, and context files
+    if [[ $file == *components/* ]] || [[ $file == *lib/* ]] || [[ $file == *context/* ]] || [[ $file == *globals.css ]]; then
+        log "Processing component/lib file: $file"
+        component_routes=$(get_routes_from_component "$file")
+        if [ -n "$component_routes" ]; then
+            while IFS= read -r component_route; do
+                if [ -n "$component_route" ]; then
+                    log "Component $file affects route: $component_route"
+                    # Replace dynamic routes for component-mapped routes
+                    replaced_routes=$(replace_dynamic_routes "$component_route")
+                    while IFS= read -r final_route; do
+                        if [ -n "$final_route" ]; then
+                            add_url "$BASE_URL$final_route"
+                        fi
+                    done <<< "$replaced_routes"
+                fi
+            done <<< "$component_routes"
+        else
+            warn "No route mapping found for component: $file (defaulting to root)"
+            add_url "$BASE_URL/"
+        fi
+    fi
+done <<< "$PAGE_RELATED_FILES"
+
 # Build the app to generate manifests
 log "Building Next.js app to generate route manifests..."
 if ! npm run build > /dev/null 2>&1; then
