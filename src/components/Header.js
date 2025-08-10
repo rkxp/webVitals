@@ -6,6 +6,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { addTrackedUrl, removeTrackedUrl } from '@/lib/storage';
 
 export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange, hasApiKey = false, triggerAddWebsite = 0, nextAutoRefresh = null, autoRefreshEnabled = true }) {
+  // Updated for Lighthouse CI component mapping test
   const { theme, changeTheme } = useTheme();
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const [websitesMenuOpen, setWebsitesMenuOpen] = useState(false);

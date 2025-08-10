@@ -1,5 +1,6 @@
 /**
  * Local storage utilities for web vitals tracking app
+ * Updated for Lighthouse CI component mapping test - lib file
  */
 
 // Storage keys

@@ -1,0 +1,66 @@
+{
+  "comment": "Maps components to the routes/pages that use them for Lighthouse CI testing",
+  "mappings": {
+    "src/components/WebVitalsApp.js": [
+      "/"
+    ],
+    "src/components/Header.js": [
+      "/"
+    ],
+    "src/components/Footer.js": [
+      "/"
+    ],
+    "src/components/VitalsDashboard.js": [
+      "/"
+    ],
+    "src/components/VitalsChart.js": [
+      "/"
+    ],
+    "src/components/Settings.js": [
+      "/"
+    ],
+    "src/context/ThemeContext.js": [
+      "/"
+    ],
+    "src/lib/storage.js": [
+      "/"
+    ],
+    "src/lib/psi-api.js": [
+      "/"
+    ],
+    "src/lib/alerts.js": [
+      "/"
+    ],
+    "src/app/layout.js": [
+      "/"
+    ],
+    "src/app/globals.css": [
+      "/"
+    ]
+  },
+  "globalComponents": {
+    "comment": "Components that affect all pages",
+    "components": [
+      "src/components/Header.js",
+      "src/components/Footer.js",
+      "src/context/ThemeContext.js",
+      "src/app/layout.js",
+      "src/app/globals.css"
+    ]
+  },
+  "examples": {
+    "comment": "Example mappings for larger applications",
+    "src/components/ProductCard.js": [
+      "/products",
+      "/product/[id]"
+    ],
+    "src/components/BlogPost.js": [
+      "/blog",
+      "/blog/[slug]"
+    ],
+    "src/components/UserProfile.js": [
+      "/profile",
+      "/user/[id]"
+    ]
+  }
+}

@@ -28,6 +28,7 @@ success() {
 # Configuration
 BASE_BRANCH="${1:-main}"
 DYNAMIC_ROUTES_MAP="dynamic-routes-map.json"
+COMPONENT_ROUTES_MAP="component-routes-map.json"
 BASE_URL="${LIGHTHOUSE_BASE_URL:-http://localhost:3000}"
 
 log "Starting changed pages detection..."
@@ -91,6 +92,46 @@ add_url() {
     local url="$1"
     if [[ ! " ${URLS[@]} " =~ " ${url} " ]]; then
         URLS+=("$url")
+    fi
+}
+
+# Function to get routes from component mappings
+get_routes_from_component() {
+    local component_file="$1"
+    local routes=""
+    
+    # Check if component routes map exists
+    if [ ! -f "$COMPONENT_ROUTES_MAP" ]; then
+        warn "Component routes map not found at $COMPONENT_ROUTES_MAP"
+        return
+    fi
+    
+    # Try to find routes for this component
+    if command -v jq >/dev/null 2>&1; then
+        # Get routes for the specific component
+        routes=$(jq -r ".mappings[\"$component_file\"][]?" "$COMPONENT_ROUTES_MAP" 2>/dev/null || echo "")
+        
+        # If no specific mapping, check if it's a global component
+        if [ -z "$routes" ]; then
+            local is_global=$(jq -r ".globalComponents.components[] | select(. == \"$component_file\")" "$COMPONENT_ROUTES_MAP" 2>/dev/null || echo "")
+            if [ -n "$is_global" ]; then
+                log "Component $component_file is global, affecting all pages"
+                # For global components, return the root route
+                routes="/"
+            fi
+        fi
+    else
+        # Fallback without jq - basic pattern matching
+        routes=$(grep -A 5 "\"$component_file\"" "$COMPONENT_ROUTES_MAP" 2>/dev/null | grep -o '"/[^"]*"' | tr -d '"' || echo "")
+        
+        # Check if it's in global components (simplified)
+        if [ -z "$routes" ] && grep -q "\"$component_file\"" "$COMPONENT_ROUTES_MAP" 2>/dev/null; then
+            routes="/"
+        fi
+    fi
+    
+    if [ -n "$routes" ]; then
+        echo "$routes"
     fi
 }
 
@@ -230,9 +271,28 @@ if [ ${#URLS[@]} -eq 0 ]; then
         elif [[ $file == pages/* ]]; then
             route=$(echo "$file" | sed 's|^pages||' | sed 's|\.[jt]sx\?$||' | sed 's|/index$||')
             
-        # Handle component changes - include root page
-        elif [[ $file == *components/* ]]; then
-            route="/"
+        # Handle component changes - use component-to-route mapping
+        elif [[ $file == *components/* ]] || [[ $file == *lib/* ]] || [[ $file == *context/* ]]; then
+            log "Processing component/lib file: $file"
+            component_routes=$(get_routes_from_component "$file")
+            if [ -n "$component_routes" ]; then
+                while IFS= read -r component_route; do
+                    if [ -n "$component_route" ]; then
+                        log "Component $file affects route: $component_route"
+                        # Replace dynamic routes for component-mapped routes
+                        replaced_routes=$(replace_dynamic_routes "$component_route")
+                        while IFS= read -r final_route; do
+                            if [ -n "$final_route" ]; then
+                                add_url "$BASE_URL$final_route"
+                            fi
+                        done <<< "$replaced_routes"
+                    fi
+                done <<< "$component_routes"
+            else
+                warn "No route mapping found for component: $file (defaulting to root)"
+                add_url "$BASE_URL/"
+            fi
+            continue
         fi
         
         # Skip API routes and empty routes
@@ -245,7 +305,7 @@ if [ ${#URLS[@]} -eq 0 ]; then
             route="/$route"
         fi
         
-        # Replace dynamic routes
+        # Replace dynamic routes for page files
         replaced_routes=$(replace_dynamic_routes "$route")
         while IFS= read -r final_route; do
             if [ -n "$final_route" ]; then

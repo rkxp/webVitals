@@ -7,6 +7,7 @@ import { hasPerformanceData, getMissingCategories } from '@/lib/psi-api';
 import VitalsChart from './VitalsChart';
 
 export default function VitalsDashboard({ trackedUrls, onRefresh, onRefreshUrl, isRefreshing, onUrlsChange, onOpenAddWebsite }) {
+  // Enhanced for component mapping test - Dashboard component
   const [vitalsData, setVitalsData] = useState({});
   const [selectedUrl, setSelectedUrl] = useState(null);
   const [showChart, setShowChart] = useState(false);

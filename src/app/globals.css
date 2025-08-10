@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* Updated for Lighthouse CI component mapping test - global CSS */
 :root {
   /* Enhanced color palette for global accessibility */
   --background: #1a1919;
