@@ -46,7 +46,7 @@ export default function VitalsDashboard({ trackedUrls, onRefresh, onRefreshUrl, 
       reloadVitalsData();
       prevUrlIdsRef.current = urlIdsString;
     }
-  }, [urlIdsString, forceReload]);
+  }, [urlIdsString, forceReload, reloadVitalsData]);
   
   // Expose reload function via ref or by listening to external events
   useEffect(() => {
@@ -100,7 +100,7 @@ export default function VitalsDashboard({ trackedUrls, onRefresh, onRefreshUrl, 
         });
       }
     }
-  }, [urlIdsString]);
+  }, [urlIdsString, urlIds]);
 
   // Also refresh data when component receives focus (to catch data updates)
   useEffect(() => {
@@ -119,7 +119,7 @@ export default function VitalsDashboard({ trackedUrls, onRefresh, onRefreshUrl, 
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [urlIdsString]); // Only depend on urlIdsString since it's derived from trackedUrls
+  }, [urlIdsString, trackedUrls]); // Only depend on urlIdsString since it's derived from trackedUrls
 
   const toggleUrlCollapse = (urlId) => {
     setCollapsedUrls(prev => {
@@ -723,7 +723,7 @@ export default function VitalsDashboard({ trackedUrls, onRefresh, onRefreshUrl, 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
           <h2 className="text-xl font-semibold text-foreground">PageSpeed Insights (Secondary Feature)</h2>
-          <p className="text-muted-foreground mt-1 text-sm">Google's real-world performance data for manual URL tracking</p>
+          <p className="text-muted-foreground mt-1 text-sm">Google&apos;s real-world performance data for manual URL tracking</p>
         </div>
         
         <div className="flex items-center gap-3 self-start sm:self-auto">
