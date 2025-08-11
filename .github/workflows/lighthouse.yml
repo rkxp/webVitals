@@ -45,8 +45,8 @@ on:
         type: boolean
 
 env:
-  # Base URL for Lighthouse testing - use production URL for GitHub Actions
-  LIGHTHOUSE_BASE_URL: ${{ vars.LIGHTHOUSE_BASE_URL || 'https://webvitals.contentstackapps.com' }}
+  # Base URL for Lighthouse testing - use localhost for GitHub Actions testing
+  LIGHTHOUSE_BASE_URL: ${{ vars.LIGHTHOUSE_BASE_URL || 'http://localhost:3000' }}
 
 jobs:
   # Job for Pull Request and Push - test only changed pages
@@ -75,6 +75,38 @@ jobs:
           
       - name: Install Node.js dependencies
         run: npm ci
+        
+      - name: Build Next.js application
+        run: |
+          echo "🏗️ Building Next.js application for localhost testing..."
+          npm run build
+          
+      - name: Start Next.js server
+        run: |
+          echo "🚀 Starting Next.js server on localhost:3000..."
+          npm start &
+          
+          # Wait for server to be ready
+          echo "⏳ Waiting for localhost:3000 to be accessible..."
+          for i in {1..30}; do
+            if curl -s --max-time 5 http://localhost:3000 > /dev/null 2>&1; then
+              echo "✅ Next.js server is ready at http://localhost:3000"
+              break
+            fi
+            
+            if [ $i -eq 30 ]; then
+              echo "❌ Next.js server failed to start within 30 seconds"
+              echo "Checking server logs..."
+              pkill -f "npm start" || echo "No npm start process found"
+              exit 1
+            fi
+            
+            if [ $((i % 5)) -eq 0 ]; then
+              echo "⏳ Still waiting for server... (${i}/30 seconds)"
+            fi
+            
+            sleep 1
+          done
         
       - name: Detect changed pages
         id: changed-pages
@@ -128,38 +160,19 @@ jobs:
           echo "url_count=$URL_COUNT" >> $GITHUB_OUTPUT
           echo "📊 Total URLs to test: $URL_COUNT"
           
-      - name: Wait for deployment to be ready
+      - name: Verify localhost server is ready
         if: steps.changed-pages.outputs.skip != 'true'
         run: |
-          echo "🌐 Testing deployment at $LIGHTHOUSE_BASE_URL..."
+          echo "🌐 Verifying localhost server at $LIGHTHOUSE_BASE_URL..."
           
-          # Wait for deployment to be ready with better error handling
-          echo "⏳ Waiting for deployment at $LIGHTHOUSE_BASE_URL..."
-          READY=false
-          
-          for i in {1..30}; do
-            if curl -s --max-time 10 $LIGHTHOUSE_BASE_URL > /dev/null 2>&1; then
-              echo "✅ Deployment is ready!"
-              READY=true
-              break
-            fi
-            
-            if [ $i -eq 30 ]; then
-              echo "❌ Deployment not accessible within 30 seconds"
-              echo "Testing basic connectivity..."
-              curl -I $LIGHTHOUSE_BASE_URL || echo "Failed to reach deployment"
-              exit 1
-            fi
-            
-            if [ $((i % 5)) -eq 0 ]; then
-              echo "⏳ Still waiting... (${i}/30 seconds)"
-            fi
-            
-            sleep 1
-          done
-          
-          if [ "$READY" = true ]; then
-            echo "🌐 Deployment is accessible at $LIGHTHOUSE_BASE_URL"
+          # Double-check that localhost is still accessible
+          if curl -s --max-time 5 $LIGHTHOUSE_BASE_URL > /dev/null 2>&1; then
+            echo "✅ Localhost server is ready for Lighthouse testing!"
+          else
+            echo "❌ Localhost server is not accessible"
+            echo "Checking server status..."
+            ps aux | grep "npm start" || echo "No npm start process found"
+            exit 1
           fi
           
       - name: Run Lighthouse CI
@@ -434,23 +447,51 @@ jobs:
       - name: Install Node.js dependencies
         run: npm ci
         
-      - name: Wait for deployment to be ready
+      - name: Build Next.js application
         run: |
-          echo "🌐 Testing deployment at $LIGHTHOUSE_BASE_URL..."
+          echo "🏗️ Building Next.js application for localhost testing..."
+          npm run build
           
-          # Wait for deployment to be ready
-          echo "⏳ Waiting for deployment at $LIGHTHOUSE_BASE_URL..."
+      - name: Start Next.js server
+        run: |
+          echo "🚀 Starting Next.js server on localhost:3000..."
+          npm start &
+          
+          # Wait for server to be ready
+          echo "⏳ Waiting for localhost:3000 to be accessible..."
           for i in {1..30}; do
-            if curl -s --max-time 10 $LIGHTHOUSE_BASE_URL > /dev/null 2>&1; then
-              echo "✅ Deployment is ready!"
+            if curl -s --max-time 5 http://localhost:3000 > /dev/null 2>&1; then
+              echo "✅ Next.js server is ready at http://localhost:3000"
               break
             fi
+            
             if [ $i -eq 30 ]; then
-              echo "❌ Deployment not accessible within 30 seconds"
+              echo "❌ Next.js server failed to start within 30 seconds"
+              echo "Checking server logs..."
+              pkill -f "npm start" || echo "No npm start process found"
               exit 1
             fi
+            
+            if [ $((i % 5)) -eq 0 ]; then
+              echo "⏳ Still waiting for server... (${i}/30 seconds)"
+            fi
+            
             sleep 1
           done
+        
+      - name: Verify localhost server is ready
+        run: |
+          echo "🌐 Verifying localhost server at $LIGHTHOUSE_BASE_URL..."
+          
+          # Double-check that localhost is still accessible
+          if curl -s --max-time 5 $LIGHTHOUSE_BASE_URL > /dev/null 2>&1; then
+            echo "✅ Localhost server is ready for full audit!"
+          else
+            echo "❌ Localhost server is not accessible"
+            echo "Checking server status..."
+            ps aux | grep "npm start" || echo "No npm start process found"
+            exit 1
+          fi
           
       - name: Run full Lighthouse CI audit
         id: lighthouse-ci-full

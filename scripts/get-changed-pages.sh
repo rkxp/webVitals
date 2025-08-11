@@ -117,7 +117,7 @@ replace_dynamic_routes() {
 BASE_BRANCH="${1:-main}"
 DYNAMIC_ROUTES_MAP="dynamic-routes-map.json"
 COMPONENT_ROUTES_MAP="component-routes-map.json"
-BASE_URL="${LIGHTHOUSE_BASE_URL:-https://webvitals.contentstackapps.com}"
+BASE_URL="${LIGHTHOUSE_BASE_URL:-http://localhost:3000}"
 
 log "Starting changed pages detection..."
 log "Base branch: $BASE_BRANCH"
