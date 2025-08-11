@@ -166,8 +166,14 @@ jobs:
         id: lighthouse-ci
         if: steps.changed-pages.outputs.skip != 'true'
         env:
-          LIGHTHOUSE_URLS: ${{ steps.changed-pages.outputs.urls }}
+          LIGHTHOUSE_URLS: ${{ steps.changed-pages.outputs.urls || env.LIGHTHOUSE_BASE_URL }}
         run: |
+          # Ensure we have URLs to test
+          if [ -z "$LIGHTHOUSE_URLS" ]; then
+            LIGHTHOUSE_URLS="$LIGHTHOUSE_BASE_URL"
+            echo "⚠️ No specific URLs from change detection, using base URL: $LIGHTHOUSE_URLS"
+          fi
+          
           echo "🚀 Running Lighthouse CI on URLs: $LIGHTHOUSE_URLS"
           echo "📊 Configuration: Single run per URL for faster CI"
           echo "⚠️  Quality Gates: CI will FAIL if scores are below thresholds"
@@ -177,14 +183,36 @@ jobs:
           echo "   - SEO: ≥70%"
           echo ""
           
+          # Verify URLs are accessible before running Lighthouse
+          echo "🔍 Verifying URL accessibility..."
+          for url in $LIGHTHOUSE_URLS; do
+            echo "Testing: $url"
+            if curl -s --max-time 10 "$url" > /dev/null 2>&1; then
+              echo "✅ $url is accessible"
+            else
+              echo "❌ $url is not accessible"
+            fi
+          done
+          echo ""
+          
           # Run Lighthouse CI and capture exit code, but don't fail immediately
           set +e  # Don't exit on error
+          echo "🏃 Starting Lighthouse CI analysis..."
           npx lhci autorun --no-logs-collection
           LIGHTHOUSE_EXIT_CODE=$?
           set -e  # Re-enable exit on error
           
           # Store the exit code for later use
           echo "lighthouse_exit_code=$LIGHTHOUSE_EXIT_CODE" >> $GITHUB_OUTPUT
+          
+          # Check what was generated
+          echo "📂 Checking generated files..."
+          if [ -d ".lighthouseci" ]; then
+            echo "✅ .lighthouseci directory created"
+            find .lighthouseci -type f | head -10
+          else
+            echo "❌ No .lighthouseci directory found"
+          fi
           
           if [ $LIGHTHOUSE_EXIT_CODE -eq 0 ]; then
             echo "✅ Lighthouse CI passed all quality gates!"
@@ -194,7 +222,7 @@ jobs:
           fi
           
       - name: Debug and prepare Lighthouse artifacts
-        if: steps.changed-pages.outputs.skip != 'true' && always()
+        if: always()
         run: |
           echo "🔍 Debugging: Checking what Lighthouse CI generated..."
           echo "Current directory contents:"
@@ -202,18 +230,22 @@ jobs:
           
           echo "Lighthouse CI directory contents:"
           if [ -d ".lighthouseci" ]; then
-            find .lighthouseci -type f -name "*.json" | head -10
+            echo "✅ Found .lighthouseci directory"
+            find .lighthouseci -type f | head -20
             ls -la .lighthouseci/
           else
             echo "❌ .lighthouseci directory not found"
           fi
           
-          echo "Creating summary even if Lighthouse failed..."
+          echo "Creating artifacts directory..."
           mkdir -p ./lighthouse-artifacts
           
           # Copy any generated reports
           if [ -d ".lighthouseci" ]; then
+            echo "📂 Copying .lighthouseci contents..."
             cp -r .lighthouseci ./lighthouse-artifacts/ || echo "Could not copy .lighthouseci"
+          else
+            echo "⚠️ No .lighthouseci directory to copy"
           fi
           
           # Create a metadata file for debugging
@@ -225,17 +257,23 @@ jobs:
             "event_type": "${{ github.event_name }}",
             "pr_number": "${{ github.event.number }}",
             "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "lighthouse_exit_code": "${{ steps.lighthouse-ci.outputs.lighthouse_exit_code }}",
-            "urls_tested": "${{ steps.changed-pages.outputs.urls }}",
-            "triggered_by": "${{ github.actor }}"
+            "lighthouse_exit_code": "${{ steps.lighthouse-ci.outputs.lighthouse_exit_code || 'not_set' }}",
+            "urls_tested": "${{ steps.changed-pages.outputs.urls || env.LIGHTHOUSE_BASE_URL }}",
+            "triggered_by": "${{ github.actor }}",
+            "change_detection_skip": "${{ steps.changed-pages.outputs.skip || 'false' }}",
+            "change_detection_reason": "${{ steps.changed-pages.outputs.reason || 'none' }}"
           }
           EOF
           
           echo "Artifact contents prepared:"
           find ./lighthouse-artifacts -type f | head -20
           
+          # Show file sizes to understand what we're uploading
+          echo "Artifact file sizes:"
+          find ./lighthouse-artifacts -type f -exec ls -lh {} \;
+          
       - name: Upload Lighthouse reports as artifacts
-        if: steps.changed-pages.outputs.skip != 'true' && always()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lighthouse-reports-pr-${{ github.event.number || github.run_id }}
@@ -269,7 +307,7 @@ jobs:
           echo "Exit code: ${{ steps.lighthouse-ci.outputs.lighthouse_exit_code }}"
           
       - name: Upload Lighthouse summary
-        if: steps.changed-pages.outputs.skip != 'true' && always()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lighthouse-summary-${{ github.event.number || github.run_id }}
