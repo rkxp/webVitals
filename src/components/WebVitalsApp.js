@@ -431,7 +431,7 @@ export default function WebVitalsApp() {
         autoRefreshEnabled={settings.autoRefreshEnabled}
       />
       
-      <main id="main-content" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-w-[1024px]" aria-label="Performance Dashboard Content">
+      <main id="main-content" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-w-[1280px]" aria-label="Performance Dashboard Content">
         <div className="space-y-12">
           {/* Tab Navigation */}
           <div className="border-b border-gray-700 mb-8">
