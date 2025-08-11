@@ -468,7 +468,7 @@ export default function WebVitalsApp() {
               onUrlsChange={handleUrlsChange}
               isRefreshing={isRefreshing}
               refreshProgress={refreshProgress}
-              refreshSingle={refreshSingle}
+              refreshSingle={handleRefreshUrl}
               lastRefresh={lastRefresh}
               hasApiKey={!!settings.googlePsiApiKey}
             />
