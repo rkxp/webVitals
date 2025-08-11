@@ -313,13 +313,13 @@ export default function LighthouseReports() {
           {/* Lighthouse Tab */}
           {activeTab === 'lighthouse' && (
             <div id="lighthouse-panel" role="tabpanel" aria-labelledby="lighthouse-tab">
-              {Object.keys(urlBasedData).length === 0 ? (
+              {githubReports.length === 0 ? (
                 <div className="max-w-4xl mx-auto text-center py-16">
                   <div className="bg-gray-800 border border-gray-700 p-4 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                     <Target className="w-8 h-8 text-blue-400" />
                   </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">No Lighthouse Data</h3>
-                  <p className="text-gray-400 mb-4">No GitHub Actions Lighthouse reports found.</p>
+                  <h3 className="text-xl font-semibold text-white mb-2">No GitHub Workflow Runs</h3>
+                  <p className="text-gray-400 mb-4">No GitHub Actions workflow runs found.</p>
                   <button
                     onClick={fetchGithubReports}
                     className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg"
@@ -328,8 +328,57 @@ export default function LighthouseReports() {
                   </button>
                 </div>
               ) : (
-                <div className="max-w-4xl mx-auto space-y-6">
-                  {Object.entries(urlBasedData).map(([url, reports]) => (
+                <div className="max-w-6xl mx-auto space-y-6">
+                  {/* Summary Stats */}
+                  <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-6">
+                    <h3 className="text-lg font-semibold text-white mb-4">Workflow Summary</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-400">{githubReports.length}</div>
+                        <div className="text-sm text-gray-400">Total Runs</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-400">
+                          {githubReports.filter(r => r.conclusion === 'success').length}
+                        </div>
+                        <div className="text-sm text-gray-400">Successful</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-red-400">
+                          {githubReports.filter(r => r.conclusion === 'failure').length}
+                        </div>
+                        <div className="text-sm text-gray-400">Failed</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-400">
+                          {githubReports.reduce((sum, r) => sum + r.artifacts.length, 0)}
+                        </div>
+                        <div className="text-sm text-gray-400">Artifacts</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Workflow Runs List */}
+                  <div className="space-y-4">
+                    {githubReports.map((run) => (
+                      <WorkflowRunCard 
+                        key={run.run_id} 
+                        run={run} 
+                        lighthouseData={lighthouseData}
+                        onLoadArtifact={loadLighthouseData}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* URL-based display for when we have actual Lighthouse data */}
+          {Object.keys(urlBasedData).length > 0 && activeTab === 'lighthouse' && (
+            <div className="max-w-4xl mx-auto space-y-6 mt-8">
+              <h3 className="text-xl font-semibold text-white mb-4">Performance Analysis by URL</h3>
+              {Object.entries(urlBasedData).map(([url, reports]) => (
                     <div key={url} className="bg-gray-800 border border-gray-700 rounded-xl p-6">
                       {/* URL Header */}
                       <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-700">
@@ -525,5 +574,221 @@ export default function LighthouseReports() {
         </div>
       </div>
     </section>
+  );
+}
+
+// Workflow Run Card Component
+function WorkflowRunCard({ run, lighthouseData, onLoadArtifact }) {
+  const [expanded, setExpanded] = useState(false);
+  const [loadingArtifacts, setLoadingArtifacts] = useState({});
+
+  const handleLoadArtifact = async (artifactId) => {
+    setLoadingArtifacts(prev => ({ ...prev, [artifactId]: true }));
+    try {
+      await onLoadArtifact(artifactId);
+    } finally {
+      setLoadingArtifacts(prev => ({ ...prev, [artifactId]: false }));
+    }
+  };
+
+  const getStatusIcon = (conclusion) => {
+    switch (conclusion) {
+      case 'success':
+        return <CheckCircle className="w-5 h-5 text-green-400" />;
+      case 'failure':
+        return <AlertTriangle className="w-5 h-5 text-red-400" />;
+      default:
+        return <Target className="w-5 h-5 text-gray-400" />;
+    }
+  };
+
+  const getStatusColor = (conclusion) => {
+    switch (conclusion) {
+      case 'success':
+        return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'failure':
+        return 'bg-red-500/20 text-red-400 border-red-500/30';
+      default:
+        return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    }
+  };
+
+  return (
+    <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
+      {/* Header */}
+      <div className="p-6 border-b border-gray-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            {getStatusIcon(run.conclusion)}
+            <div>
+              <h3 className="text-lg font-semibold text-white">
+                Run #{run.workflow_run_number}
+              </h3>
+              <div className="flex items-center space-x-4 text-sm text-gray-400">
+                <span>{new Date(run.created_at).toLocaleDateString()}</span>
+                <span>•</span>
+                <span className={`px-2 py-1 rounded border text-xs font-medium ${getStatusColor(run.conclusion)}`}>
+                  {run.conclusion}
+                </span>
+                <span>•</span>
+                <span>{run.artifacts.length} artifacts</span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center space-x-2 text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            <span>{expanded ? 'Collapse' : 'Expand'}</span>
+            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Expanded Content */}
+      {expanded && (
+        <div className="p-6 space-y-6">
+          {/* Commit Info */}
+          <div className="bg-gray-750 border border-gray-600 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-gray-300 mb-2">Commit Details</h4>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-gray-400">SHA:</span>
+                <code className="text-xs bg-gray-800 px-2 py-1 rounded text-blue-400">
+                  {run.commit_sha.substring(0, 8)}
+                </code>
+              </div>
+              <div>
+                <span className="text-xs text-gray-400">Message:</span>
+                <p className="text-sm text-white mt-1">
+                  {run.commit_message?.split('\n')[0] || 'No commit message'}
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-gray-400">Author:</span>
+                <span className="text-sm text-white">{run.commit_author?.name || run.triggered_by}</span>
+                <span className="text-xs text-gray-400">on</span>
+                <span className="text-sm text-blue-400">{run.branch}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Artifacts */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-300 mb-3">Artifacts ({run.artifacts.length})</h4>
+            <div className="space-y-3">
+              {run.artifacts.map((artifact) => {
+                const artifactData = lighthouseData[artifact.id];
+                const isLoading = loadingArtifacts[artifact.id];
+                
+                return (
+                  <div key={artifact.id} className="bg-gray-750 border border-gray-600 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <h5 className="text-sm font-medium text-white">{artifact.name}</h5>
+                        <p className="text-xs text-gray-400">
+                          {(artifact.size_in_bytes / 1024).toFixed(1)} KB • 
+                          Created {new Date(artifact.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleLoadArtifact(artifact.id)}
+                          disabled={isLoading}
+                          className="bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white px-3 py-1 rounded text-xs font-medium transition-colors flex items-center space-x-1"
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader className="w-3 h-3 animate-spin" />
+                              <span>Loading...</span>
+                            </>
+                          ) : (
+                            <>
+                              <BarChart3 className="w-3 h-3" />
+                              <span>View</span>
+                            </>
+                          )}
+                        </button>
+                        <a
+                          href={artifact.download_url}
+                          className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                        >
+                          Download
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Artifact Content */}
+                    {artifactData && (
+                      <div className="mt-4 pt-4 border-t border-gray-600">
+                        {artifactData.reports && artifactData.reports.length > 0 ? (
+                          <div>
+                            <h6 className="text-xs font-medium text-green-400 mb-2">
+                              ✅ {artifactData.reports.length} Lighthouse Report(s) Found
+                            </h6>
+                            <div className="space-y-2">
+                              {artifactData.reports.map((report, idx) => (
+                                <div key={idx} className="bg-gray-800 rounded p-3">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs text-blue-400">{report.url}</span>
+                                    <span className="text-xs text-gray-400">
+                                      {new Date(report.timestamp).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  {report.categories && (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                      {Object.entries(report.categories).map(([category, data]) => {
+                                        const score = Math.round(data.score * 100);
+                                        return (
+                                          <div key={category} className="text-center">
+                                            <div className={`text-sm font-bold ${
+                                              score >= 90 ? 'text-green-400' :
+                                              score >= 50 ? 'text-yellow-400' :
+                                              'text-red-400'
+                                            }`}>
+                                              {score}
+                                            </div>
+                                            <div className="text-xs text-gray-400 capitalize">
+                                              {category.replace('-', ' ')}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <h6 className="text-xs font-medium text-yellow-400 mb-2">
+                              ⚠️ No Lighthouse Reports (Metadata Only)
+                            </h6>
+                            {artifactData.metadata && (
+                              <div className="bg-gray-800 rounded p-3 text-xs">
+                                <div className="grid grid-cols-2 gap-2 text-gray-400">
+                                  <div>Exit Code: <span className="text-white">{artifactData.metadata.lighthouse_exit_code}</span></div>
+                                  <div>URLs Tested: <span className="text-white">{artifactData.metadata.urls_tested || artifactData.metadata.custom_urls}</span></div>
+                                  <div>Event: <span className="text-white">{artifactData.metadata.event_type}</span></div>
+                                  <div>Triggered By: <span className="text-white">{artifactData.metadata.triggered_by}</span></div>
+                                </div>
+                                {artifactData.message && (
+                                  <p className="text-yellow-300 mt-2">{artifactData.message}</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

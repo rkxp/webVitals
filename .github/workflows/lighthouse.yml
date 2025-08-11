@@ -164,10 +164,16 @@ jobs:
           
       - name: Run Lighthouse CI
         id: lighthouse-ci
-        if: steps.changed-pages.outputs.skip != 'true'
+        if: always()
         env:
           LIGHTHOUSE_URLS: ${{ steps.changed-pages.outputs.urls || env.LIGHTHOUSE_BASE_URL }}
         run: |
+          # Always run Lighthouse CI, even if change detection suggests skipping
+          if [ "${{ steps.changed-pages.outputs.skip }}" = "true" ]; then
+            echo "⚠️ Change detection suggested skipping, but forcing Lighthouse run for testing"
+            LIGHTHOUSE_URLS="$LIGHTHOUSE_BASE_URL"
+          fi
+          
           # Ensure we have URLs to test
           if [ -z "$LIGHTHOUSE_URLS" ]; then
             LIGHTHOUSE_URLS="$LIGHTHOUSE_BASE_URL"
@@ -198,7 +204,14 @@ jobs:
           # Run Lighthouse CI and capture exit code, but don't fail immediately
           set +e  # Don't exit on error
           echo "🏃 Starting Lighthouse CI analysis..."
-          npx lhci autorun --no-logs-collection
+          echo "📋 Current working directory: $(pwd)"
+          echo "📋 Environment variables:"
+          echo "  LIGHTHOUSE_URLS: $LIGHTHOUSE_URLS"
+          echo "  CI: $CI"
+          echo "  GITHUB_ACTIONS: $GITHUB_ACTIONS"
+          
+          # Run with verbose output to see what's happening
+          npx lhci autorun --verbose --no-logs-collection
           LIGHTHOUSE_EXIT_CODE=$?
           set -e  # Re-enable exit on error
           

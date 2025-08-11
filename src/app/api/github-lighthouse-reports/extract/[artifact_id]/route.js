@@ -3,7 +3,7 @@ import AdmZip from 'adm-zip';
 
 export async function GET(request, { params }) {
   try {
-    const { artifact_id } = params;
+    const { artifact_id } = await params;
     
     const owner = process.env.GITHUB_REPOSITORY_OWNER || 'rkxp';
     const repo = process.env.GITHUB_REPOSITORY_NAME || 'webVitals';
