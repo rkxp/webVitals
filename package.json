@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "lighthouse": "npx lighthouse",
-    "lighthouse:ci": "npx lhci autorun"
+    "lighthouse:ci": "npx lhci autorun",
+    "lighthouse:local": "./scripts/lighthouse-local.sh"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

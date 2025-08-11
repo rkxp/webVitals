@@ -4,7 +4,7 @@ module.exports = {
       // URLs to test - can be overridden by environment variables or GitHub Actions
       url: process.env.LIGHTHOUSE_URLS ? 
         process.env.LIGHTHOUSE_URLS.split(' ').filter(Boolean) : 
-        [process.env.PRODUCTION_URL || 'https://webvitals.contentstackapps.com/'].filter(Boolean),
+        [process.env.LIGHTHOUSE_BASE_URL || process.env.PRODUCTION_URL || 'http://localhost:3000'].filter(Boolean),
       
       // Lighthouse collection settings  
       numberOfRuns: 1, // Single run for faster CI (was 3)
