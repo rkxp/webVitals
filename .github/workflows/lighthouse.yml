@@ -222,9 +222,14 @@ jobs:
           echo "📂 Checking generated files..."
           if [ -d ".lighthouseci" ]; then
             echo "✅ .lighthouseci directory created"
-            find .lighthouseci -type f | head -10
+            echo "📁 Directory structure:"
+            find .lighthouseci -type f -exec ls -la {} \;
+            echo "📄 File contents preview:"
+            find .lighthouseci -name "*.json" -exec echo "=== {} ===" \; -exec head -20 {} \;
           else
             echo "❌ No .lighthouseci directory found"
+            echo "Current directory contents:"
+            ls -la
           fi
           
           if [ $LIGHTHOUSE_EXIT_CODE -eq 0 ]; then
@@ -292,6 +297,7 @@ jobs:
           name: lighthouse-reports-pr-${{ github.event.number || github.run_id }}
           path: lighthouse-artifacts/
           retention-days: 30
+          include-hidden-files: true
           
       - name: Post Lighthouse results summary
         if: steps.changed-pages.outputs.skip != 'true' && always()
@@ -326,6 +332,7 @@ jobs:
           name: lighthouse-summary-${{ github.event.number || github.run_id }}
           path: lighthouse-summary.json
           retention-days: 30
+          include-hidden-files: true
           
       - name: Comment PR
         if: steps.changed-pages.outputs.skip != 'true' && github.event_name == 'pull_request'
@@ -527,6 +534,7 @@ jobs:
           name: lighthouse-reports-full-${{ github.run_id }}
           path: lighthouse-artifacts-full/
           retention-days: 30
+          include-hidden-files: true
           
       - name: Fail job if full Lighthouse CI failed (after artifacts uploaded)
         if: steps.lighthouse-ci-full.outputs.lighthouse_exit_code != '0'
