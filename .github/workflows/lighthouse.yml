@@ -45,8 +45,8 @@ on:
         type: boolean
 
 env:
-  # Base URL for Lighthouse testing
-  LIGHTHOUSE_BASE_URL: ${{ vars.LIGHTHOUSE_BASE_URL || 'http://localhost:3000' }}
+  # Base URL for Lighthouse testing - use production URL for GitHub Actions
+  LIGHTHOUSE_BASE_URL: ${{ vars.LIGHTHOUSE_BASE_URL || 'https://webvitals.contentstackapps.com' }}
 
 jobs:
   # Job for Pull Request and Push - test only changed pages
@@ -128,52 +128,38 @@ jobs:
           echo "url_count=$URL_COUNT" >> $GITHUB_OUTPUT
           echo "📊 Total URLs to test: $URL_COUNT"
           
-      - name: Start Next.js development server
+      - name: Wait for deployment to be ready
         if: steps.changed-pages.outputs.skip != 'true'
         run: |
-          echo "🚀 Starting Next.js development server..."
+          echo "🌐 Testing deployment at $LIGHTHOUSE_BASE_URL..."
           
-          # Start server in background
-          npm run dev > server.log 2>&1 &
-          SERVER_PID=$!
-          echo "Server PID: $SERVER_PID"
-          
-          # Wait for server to be ready with better error handling
-          echo "⏳ Waiting for development server at $LIGHTHOUSE_BASE_URL..."
+          # Wait for deployment to be ready with better error handling
+          echo "⏳ Waiting for deployment at $LIGHTHOUSE_BASE_URL..."
           READY=false
           
-          for i in {1..60}; do
-            if curl -s --max-time 5 $LIGHTHOUSE_BASE_URL > /dev/null 2>&1; then
-              echo "✅ Server is ready!"
+          for i in {1..30}; do
+            if curl -s --max-time 10 $LIGHTHOUSE_BASE_URL > /dev/null 2>&1; then
+              echo "✅ Deployment is ready!"
               READY=true
               break
             fi
             
-            # Check if server process is still running
-            if ! kill -0 $SERVER_PID 2>/dev/null; then
-              echo "❌ Server process died unexpectedly"
-              echo "Server logs:"
-              cat server.log || echo "No logs available"
+            if [ $i -eq 30 ]; then
+              echo "❌ Deployment not accessible within 30 seconds"
+              echo "Testing basic connectivity..."
+              curl -I $LIGHTHOUSE_BASE_URL || echo "Failed to reach deployment"
               exit 1
             fi
             
-            if [ $i -eq 60 ]; then
-              echo "❌ Server failed to start within 60 seconds"
-              echo "Server logs:"
-              cat server.log || echo "No logs available"
-              echo "Server process status: $(ps aux | grep $SERVER_PID || echo 'Process not found')"
-              exit 1
-            fi
-            
-            if [ $((i % 10)) -eq 0 ]; then
-              echo "⏳ Still waiting... (${i}/60 seconds)"
+            if [ $((i % 5)) -eq 0 ]; then
+              echo "⏳ Still waiting... (${i}/30 seconds)"
             fi
             
             sleep 1
           done
           
           if [ "$READY" = true ]; then
-            echo "🌐 Server is responding at $LIGHTHOUSE_BASE_URL"
+            echo "🌐 Deployment is accessible at $LIGHTHOUSE_BASE_URL"
           fi
           
       - name: Run Lighthouse CI
@@ -390,27 +376,19 @@ jobs:
       - name: Install Node.js dependencies
         run: npm ci
         
-      - name: Build Next.js app
-        if: github.event.inputs.skip_build != 'true'
-        run: npm run build
-        
-      - name: Start Next.js server
+      - name: Wait for deployment to be ready
         run: |
-          if [ "${{ github.event.inputs.skip_build }}" = "true" ]; then
-            npm run dev &
-          else
-            npm start &
-          fi
+          echo "🌐 Testing deployment at $LIGHTHOUSE_BASE_URL..."
           
-          # Wait for server to be ready
-          echo "Waiting for server..."
+          # Wait for deployment to be ready
+          echo "⏳ Waiting for deployment at $LIGHTHOUSE_BASE_URL..."
           for i in {1..30}; do
-            if curl -s $LIGHTHOUSE_BASE_URL > /dev/null; then
-              echo "Server is ready!"
+            if curl -s --max-time 10 $LIGHTHOUSE_BASE_URL > /dev/null 2>&1; then
+              echo "✅ Deployment is ready!"
               break
             fi
             if [ $i -eq 30 ]; then
-              echo "Server failed to start within 30 seconds"
+              echo "❌ Deployment not accessible within 30 seconds"
               exit 1
             fi
             sleep 1

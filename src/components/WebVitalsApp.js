@@ -434,18 +434,8 @@ export default function WebVitalsApp() {
         <div className="space-y-12">
           
 
-          {/* Primary Feature: Lighthouse Reports Dashboard */}
-          <LighthouseReports />
-
-          {/* Secondary Feature: Web Vitals Dashboard */}
-          <VitalsDashboard
-            trackedUrls={trackedUrls}
-            onRefresh={handleRefresh}
-            onRefreshUrl={handleRefreshUrl}
-            isRefreshing={isRefreshing}
-            onUrlsChange={handleUrlsChange}
-            onOpenAddWebsite={handleOpenAddWebsite}
-          />
+                            {/* Performance Dashboard with Tabs */}
+                  <LighthouseReports />
 
           {/* Settings Modal */}
           <Settings 
