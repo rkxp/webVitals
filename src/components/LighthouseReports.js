@@ -328,7 +328,7 @@ export default function LighthouseReports() {
                   </button>
                 </div>
               ) : (
-                <div className="w-full max-w-7xl mx-auto space-y-6 px-4">
+                <div className="w-full max-w-7xl mx-auto space-y-6 px-4 min-w-[1024px]">
                   {/* Summary Stats */}
                   <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-6">
                     <h3 className="text-lg font-semibold text-white mb-4">Workflow Summary</h3>
