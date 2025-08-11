@@ -178,7 +178,7 @@ export default function LighthouseReports() {
               <div className="space-y-2 text-sm text-gray-400">
                 <div>SHA: <span className="text-white font-mono">{run.commit_sha?.substring(0, 8) || 'N/A'}</span></div>
                 <div>Message: <span className="text-white">{run.commit_message || 'N/A'}</span></div>
-                <div>Author: <span className="text-white">{run.commit_author || 'N/A'}</span></div>
+                <div>Author: <span className="text-white">{run.commit_author?.name || run.commit_author?.username || run.commit_author || 'N/A'}</span></div>
                 <div>Branch: <span className="text-white">{run.branch || 'N/A'}</span></div>
               </div>
             </div>
