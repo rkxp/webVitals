@@ -241,7 +241,7 @@ export default function LighthouseReports() {
   }
 
   return (
-    <section className="space-y-8" aria-labelledby="performance-dashboard-heading">
+    <section className="space-y-8 min-w-0" aria-labelledby="performance-dashboard-heading">
       {/* Clean Header */}
       <header className="bg-gray-900 border border-gray-800 rounded-2xl p-6" role="banner">
         <div className="flex items-center justify-between">
@@ -328,7 +328,7 @@ export default function LighthouseReports() {
                   </button>
                 </div>
               ) : (
-                <div className="max-w-6xl mx-auto space-y-6">
+                <div className="w-full max-w-7xl mx-auto space-y-6 px-4">
                   {/* Summary Stats */}
                   <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-6">
                     <h3 className="text-lg font-semibold text-white mb-4">Workflow Summary</h3>
