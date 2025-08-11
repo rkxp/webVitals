@@ -23,11 +23,26 @@ export default function LighthouseReports() {
       
       if (response.ok) {
         const data = await response.json();
-        setGithubReports(data.reports || []);
+        // Filter out reports without valid URLs or with only metadata
+        const validReports = (data.reports || []).filter(report => {
+          // Only include reports with valid URLs (not localhost or unknown)
+          const hasValidUrl = report.url && 
+            report.url !== 'null' && 
+            report.url !== 'undefined' && 
+            !report.url.includes('localhost') &&
+            report.url.startsWith('http');
+          
+          // Only include if it has actual lighthouse data (not just metadata)
+          const hasLighthouseData = report.lighthouse_reports && 
+            report.lighthouse_reports.length > 0;
+            
+          return hasValidUrl && hasLighthouseData;
+        });
+        setGithubReports(validReports);
         
-        // Fetch detailed data for each artifact
+        // Fetch detailed data for each artifact from valid reports only
         const artifactIds = [];
-        data.reports?.forEach(run => {
+        validReports.forEach(run => {
           run.artifacts
             .filter(artifact => artifact.name.includes('lighthouse-reports-'))
             .forEach(artifact => {
@@ -183,98 +198,95 @@ export default function LighthouseReports() {
               </div>
             </div>
 
-            {/* Artifacts */}
+            {/* Lighthouse Reports Only */}
             <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-white flex items-center">
-                <BarChart3 className="w-5 h-5 mr-2" />
-                Lighthouse Artifacts ({run.artifacts.length})
-              </h4>
-              
-              {run.artifacts.map(artifact => {
-                const artifactData = lighthouseData[artifact.id];
-                const hasReports = artifactData?.reports?.length > 0;
+              {(() => {
+                // Filter to only show artifacts with actual Lighthouse reports
+                const artifactsWithReports = run.artifacts.filter(artifact => {
+                  const artifactData = lighthouseData[artifact.id];
+                  return artifactData?.reports?.length > 0;
+                });
                 
-                return (
-                  <div key={artifact.id} className="bg-gray-750 border border-gray-600 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${hasReports ? 'bg-green-400' : 'bg-yellow-400'}`} />
-                        <span className="font-medium text-white">{artifact.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-sm text-gray-400">
-                        <span>{(artifact.size_in_bytes / 1024).toFixed(1)} KB</span>
-                        <span>•</span>
-                        <span>{formatDate(artifact.created_at)}</span>
+                if (artifactsWithReports.length === 0) {
+                  return (
+                    <div className="bg-gray-750 border border-gray-600 rounded-lg p-4 text-center">
+                      <div className="text-gray-400">
+                        <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p>No Lighthouse reports found in this workflow</p>
                       </div>
                     </div>
+                  );
+                }
+                
+                return (
+                  <>
+                    <h4 className="text-lg font-semibold text-white flex items-center">
+                      <BarChart3 className="w-5 h-5 mr-2" />
+                      Lighthouse Reports ({artifactsWithReports.length})
+                    </h4>
+                    
+                    {artifactsWithReports.map(artifact => {
+                      const artifactData = lighthouseData[artifact.id];
+                      
+                      return (
+                        <div key={artifact.id} className="bg-gray-750 border border-gray-600 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-3 h-3 rounded-full bg-green-400" />
+                              <span className="font-medium text-white">{artifact.name}</span>
+                            </div>
+                            <div className="flex items-center space-x-2 text-sm text-gray-400">
+                              <span>{(artifact.size_in_bytes / 1024).toFixed(1)} KB</span>
+                              <span>•</span>
+                              <span>{formatDate(artifact.created_at)}</span>
+                            </div>
+                          </div>
 
-                    {hasReports ? (
-                      <div>
-                        <div className="flex items-center space-x-2 mb-3">
-                          <CheckCircle className="w-4 h-4 text-green-400" />
-                          <span className="text-green-400 font-medium">
-                            {artifactData.reports.length} Lighthouse Report(s) Found
-                          </span>
-                        </div>
-                        
-                        {artifactData.reports.map((report, idx) => (
-                          <div key={idx} className="mb-4 last:mb-0">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-blue-400 text-sm font-medium">
-                                {report.url || 'Unknown URL'}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                {report.timestamp ? formatDate(report.timestamp) : 'Invalid Date'}
+                          <div>
+                            <div className="flex items-center space-x-2 mb-3">
+                              <CheckCircle className="w-4 h-4 text-green-400" />
+                              <span className="text-green-400 font-medium">
+                                {artifactData.reports.length} Lighthouse Report(s)
                               </span>
                             </div>
                             
-                            {report.categories && (
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {Object.entries(report.categories).map(([key, category]) => (
-                                  <div key={key} className="flex items-center space-x-2">
-                                    {getCategoryIcon(key)}
-                                    <div className="flex-1 min-w-0">
-                                      <div className="text-xs text-gray-400 truncate">
-                                        {category.title || key}
+                            {artifactData.reports.map((report, idx) => (
+                              <div key={idx} className="mb-4 last:mb-0">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-blue-400 text-sm font-medium">
+                                    {report.url || 'Unknown URL'}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    {report.timestamp ? formatDate(report.timestamp) : 'Invalid Date'}
+                                  </span>
+                                </div>
+                                
+                                {report.categories && (
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    {Object.entries(report.categories).map(([key, category]) => (
+                                      <div key={key} className="flex items-center space-x-2">
+                                        {getCategoryIcon(key)}
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-xs text-gray-400 truncate">
+                                            {category.title || key}
+                                          </div>
+                                          <div className={`text-sm font-bold ${getScoreColor(category.score)}`}>
+                                            {formatScore(category.score)}%
+                                          </div>
+                                        </div>
                                       </div>
-                                      <div className={`text-sm font-bold ${getScoreColor(category.score)}`}>
-                                        {formatScore(category.score)}%
-                                      </div>
-                                    </div>
+                                    ))}
                                   </div>
-                                ))}
+                                )}
                               </div>
-                            )}
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="flex items-center space-x-2 mb-2">
-                          <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                          <span className="text-yellow-400 font-medium">
-                            ⚠️ No Lighthouse Reports (Metadata Only)
-                          </span>
                         </div>
-                        
-                        {artifactData?.metadata && (
-                          <div className="text-sm text-gray-400 space-y-1">
-                            <div>Run ID: <span className="text-white">{artifactData.metadata.workflow_run_id}</span></div>
-                            <div>Exit Code: <span className="text-white">{artifactData.metadata.lighthouse_exit_code}</span></div>
-                            <div>URLs Tested: <span className="text-white">{artifactData.metadata.urls_tested}</span></div>
-                            <div>Event: <span className="text-white">{artifactData.metadata.event_type}</span></div>
-                            <div>Triggered By: <span className="text-white">{artifactData.metadata.triggered_by}</span></div>
-                          </div>
-                        )}
-                        
-                        {artifactData?.message && (
-                          <p className="text-yellow-300 mt-2">{artifactData.message}</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                      );
+                    })}
+                  </>
                 );
-              })}
+              })()}
             </div>
           </div>
         )}
