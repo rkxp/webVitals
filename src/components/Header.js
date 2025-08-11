@@ -300,10 +300,10 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
                 </div>
                 <div className="min-w-0">
                   <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-white tracking-tight truncate">
-                    Lighthouse Performance Dashboard
+                    Performance Dashboard
                   </h1>
                   <p className="text-xs text-gray-400 hidden sm:block truncate">
-                    Automated CI performance monitoring
+                    Lighthouse CI & Web Vitals monitoring
                   </p>
                 </div>
               </div>
@@ -468,8 +468,8 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
                       ) : (
                         <div className="text-center py-8 text-muted-foreground">
                           <Globe size={32} className="mx-auto mb-3 opacity-50" />
-                          <p className="text-sm font-medium mb-1">No websites tracked yet</p>
-                          <p className="text-xs mb-3">Start monitoring your website&apos;s performance</p>
+                                                  <p className="text-sm font-medium mb-1">No websites tracked yet</p>
+                        <p className="text-xs mb-3">Add URLs to monitor Web Vitals performance</p>
                           <button
                             onClick={handleOpenModal}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition-colors"
@@ -654,7 +654,7 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
                       <div className="text-center py-6 text-muted-foreground">
                         <Globe size={24} className="mx-auto mb-3 opacity-50" />
                         <p className="text-sm font-medium mb-1">No websites tracked yet</p>
-                        <p className="text-xs mb-3">Start monitoring your website&apos;s performance</p>
+                        <p className="text-xs mb-3">Add URLs to monitor Web Vitals performance</p>
                         <button
                           onClick={handleOpenModal}
                           className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm transition-colors"
@@ -708,8 +708,8 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-foreground">Add New Website</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Start monitoring Core Web Vitals for your website
+                                            <p className="text-sm text-muted-foreground mt-1">
+                    Monitor Core Web Vitals & Lighthouse CI performance
                   </p>
                 </div>
               </div>
@@ -724,7 +724,7 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
 
             <div className="space-y-6">
               {/* URL Input Section */}
-              <div className="space-y-3">
+                              <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Link className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   <label className="text-sm font-medium text-foreground">
@@ -735,7 +735,7 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
                     <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block">
                       <div className="bg-black text-white text-xs rounded py-1 px-2 whitespace-nowrap">
-                        We&apos;ll add https:// if not provided
+                        For Web Vitals monitoring via PageSpeed Insights
                       </div>
                     </div>
                   </div>

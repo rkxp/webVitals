@@ -14,11 +14,11 @@ export default function Footer() {
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
               <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              <h3 className="font-semibold text-foreground">Web Vitals Monitor</h3>
+              <h3 className="font-semibold text-foreground">Performance Dashboard</h3>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Monitor your website&apos;s Core Web Vitals in real-time. Track performance, 
-              diagnose issues, and optimize user experience with actionable insights.
+              Comprehensive performance monitoring with Lighthouse CI automation and 
+              real-time Web Vitals tracking. GitHub Actions integration for continuous performance auditing.
             </p>
             
           </div>
@@ -29,19 +29,19 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center space-x-2">
                 <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
-                <span>Real-time Core Web Vitals tracking</span>
+                <span>Automated Lighthouse CI via GitHub Actions</span>
               </li>
               <li className="flex items-center space-x-2">
                 <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
-                <span>Performance diagnosis & recommendations</span>
+                <span>Real-time Web Vitals monitoring</span>
               </li>
               <li className="flex items-center space-x-2">
                 <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
-                <span>Automated alerts & notifications</span>
+                <span>Performance insights & recommendations</span>
               </li>
               <li className="flex items-center space-x-2">
                 <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
-                <span>Historical data & trend analysis</span>
+                <span>Workflow artifacts & historical tracking</span>
               </li>
             </ul>
           </div>
@@ -50,17 +50,20 @@ export default function Footer() {
           <div className="space-y-3">
             <h3 className="font-semibold text-foreground">Information</h3>
             <div className="space-y-2 text-sm text-muted-foreground">
-              
+              <div className="flex items-center space-x-2">
+                <Github size={14} />
+                <span>GitHub Actions Lighthouse CI</span>
+              </div>
               <div className="flex items-center space-x-2">
                 <Zap size={14} />
-                <span>Powered by Google PageSpeed Insights</span>
+                <span>Google PageSpeed Insights API</span>
               </div>
             </div>
             
             <div className="pt-3 border-t border-border/50">
               <p className="text-xs text-muted-foreground">
-                This tool helps optimize Core Web Vitals based on Google&apos;s 
-                performance standards and accessibility guidelines.
+                Dual monitoring approach: automated CI performance auditing 
+                and manual Web Vitals tracking for comprehensive optimization.
               </p>
             </div>
           </div>
@@ -70,10 +73,10 @@ export default function Footer() {
         <div className="mt-8 pt-6 border-t border-border/50">
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
             <p className="text-xs text-muted-foreground">
-              © {currentYear} Web Vitals Monitor. Built with Next.js & Tailwind CSS.
+              © {currentYear} Performance Dashboard. Built with Next.js, Lighthouse CI & GitHub Actions.
             </p>
             <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-              <span>Google Core Web Vitals compliant</span>
+              <span>Lighthouse CI enabled</span>
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             </div>
           </div>
