@@ -23,26 +23,12 @@ export default function LighthouseReports() {
       
       if (response.ok) {
         const data = await response.json();
-        // Filter out reports without valid URLs or with only metadata
-        const validReports = (data.reports || []).filter(report => {
-          // Only include reports with valid URLs (not localhost or unknown)
-          const hasValidUrl = report.url && 
-            report.url !== 'null' && 
-            report.url !== 'undefined' && 
-            !report.url.includes('localhost') &&
-            report.url.startsWith('http');
-          
-          // Only include if it has actual lighthouse data (not just metadata)
-          const hasLighthouseData = report.lighthouse_reports && 
-            report.lighthouse_reports.length > 0;
-            
-          return hasValidUrl && hasLighthouseData;
-        });
-        setGithubReports(validReports);
+        // Show all workflow runs - filtering will happen at the artifact level
+        setGithubReports(data.reports || []);
         
-        // Fetch detailed data for each artifact from valid reports only
+        // Fetch detailed data for each artifact
         const artifactIds = [];
-        validReports.forEach(run => {
+        (data.reports || []).forEach(run => {
           run.artifacts
             .filter(artifact => artifact.name.includes('lighthouse-reports-'))
             .forEach(artifact => {
