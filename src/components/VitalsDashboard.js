@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { RefreshCw, TrendingUp, TrendingDown, Minus, AlertTriangle, CheckCircle, XCircle, ChevronDown, ChevronUp, Zap, Clock, Eye, Server, Smartphone, Globe, Trash2, FolderOpen, Folder, BarChart3 } from 'lucide-react';
 import { getLatestVitalsData, getMetricStatus, VITALS_THRESHOLDS, removeTrackedUrl } from '@/lib/storage';
 import { hasPerformanceData, getMissingCategories } from '@/lib/psi-api';
@@ -29,7 +29,7 @@ export default function VitalsDashboard({ trackedUrls, onRefresh, onRefreshUrl, 
   const [forceReload, setForceReload] = useState(0);
   
   // Function to reload vitals data
-  const reloadVitalsData = () => {
+  const reloadVitalsData = useCallback(() => {
     const data = {};
     trackedUrls.forEach(url => {
       const latest = getLatestVitalsData(url.id);
@@ -38,7 +38,7 @@ export default function VitalsDashboard({ trackedUrls, onRefresh, onRefreshUrl, 
       }
     });
     setVitalsData(data);
-  };
+  }, [trackedUrls]);
 
   // Load vitals data when URLs actually change or force reload is triggered
   useEffect(() => {
