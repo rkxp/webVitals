@@ -30,7 +30,6 @@ on:
       - 'dynamic-routes-map.json'
       - 'component-routes-map.json'
   schedule:
-    # Run nightly at 2 AM UTC
     - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:

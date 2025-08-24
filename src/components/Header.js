@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Settings, Sun, Moon, Monitor, BarChart3, Globe, Zap, Plus, Trash2, Clock, ChevronDown, ChevronUp, X, Link, HelpCircle, Loader, AlertTriangle, CheckCircle, Search, Calendar, ExternalLink } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { addTrackedUrl, removeTrackedUrl } from '@/lib/storage';
+import { fetchHeaderContent } from '@/lib/contentstack';
 
 export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange, hasApiKey = false, triggerAddWebsite = 0, nextAutoRefresh = null, autoRefreshEnabled = true }) {
   // Updated for Lighthouse CI component mapping test - workflow success!
@@ -19,9 +20,29 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
   const [urlValidation, setUrlValidation] = useState({ isValid: false, message: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'name', 'lastChecked'
+  const [headerContent, setHeaderContent] = useState(null);
+  const [isLoadingContent, setIsLoadingContent] = useState(true);
   
   const themeDropdownRef = useRef(null);
   const websitesDropdownRef = useRef(null);
+
+  // Fetch header content from Contentstack
+  useEffect(() => {
+    const loadHeaderContent = async () => {
+      try {
+        setIsLoadingContent(true);
+        const content = await fetchHeaderContent();
+        setHeaderContent(content);
+      } catch (error) {
+        console.error('Failed to load header content:', error);
+        // Content will fallback to default values
+      } finally {
+        setIsLoadingContent(false);
+      }
+    };
+
+    loadHeaderContent();
+  }, []);
 
   // Modal handlers
   const handleOpenModal = () => {
@@ -300,10 +321,10 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
                 </div>
                 <div className="min-w-0">
                   <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-white tracking-tight truncate">
-                    Performance Dashboard
+                    {headerContent?.title || 'Performance Dashboard'}
                   </h1>
                   <p className="text-xs text-gray-400 hidden sm:block truncate">
-                    Lighthouse CI & Web Vitals monitoring
+                    {headerContent?.subtitle || 'Lighthouse CI & Web Vitals monitoring'}
                   </p>
                 </div>
               </div>
@@ -673,6 +694,7 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
               onClick={onOpenSettings}
               className="p-1.5 sm:p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200"
               title="Settings"
+              aria-label={headerContent?.settings_aria_label || 'Open settings modal'}
             >
               <Settings size={16} className="sm:w-[18px] sm:h-[18px]" />
             </button>
@@ -707,9 +729,9 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
                   <Plus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-foreground">Add New Website</h3>
+                  <h3 className="text-xl font-semibold text-foreground">{headerContent?.modal_title || 'Add New Website'}</h3>
                                             <p className="text-sm text-muted-foreground mt-1">
-                    Monitor Core Web Vitals & Lighthouse CI performance
+                    {headerContent?.modal_subtitle || 'Monitor Core Web Vitals & Lighthouse CI performance'}
                   </p>
                 </div>
               </div>
@@ -735,7 +757,7 @@ export default function Header({ onOpenSettings, trackedUrls = [], onUrlsChange,
                     <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block">
                       <div className="bg-black text-white text-xs rounded py-1 px-2 whitespace-nowrap">
-                        For Web Vitals monitoring via PageSpeed Insights
+{headerContent?.api_key_tooltip || 'For Web Vitals monitoring via PageSpeed Insights'}
                       </div>
                     </div>
                   </div>

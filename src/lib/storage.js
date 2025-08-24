@@ -18,6 +18,10 @@ const DEFAULT_SETTINGS = {
   emailJsTemplateId: '',
   emailJsUserId: '',
   emailJsAccessToken: '',
+  contentstackApiKey: '',
+  contentstackDeliveryToken: '',
+  contentstackEnvironment: 'development',
+  contentstackRegion: 'us',
   alertsEnabled: true,
   theme: 'dark', // 'light', 'dark', 'system'
   autoRefreshEnabled: true,
