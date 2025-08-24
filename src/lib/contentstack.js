@@ -12,16 +12,38 @@ const CONTENTSTACK_CONFIG = {
   region: process.env.NEXT_PUBLIC_CONTENTSTACK_REGION || 'us', // 'us', 'eu', 'azure-na', 'azure-eu', 'gcp-na'
 };
 
+// Map environment region to Contentstack region
+const getContentstackRegion = (envRegion) => {
+  switch (envRegion?.toUpperCase()) {
+    case 'NA':
+    case 'US':
+      return 'us';
+    case 'EU':
+      return 'eu';
+    case 'AZURE-NA':
+      return 'azure-na';
+    case 'AZURE-EU':
+      return 'azure-eu';
+    case 'GCP-NA':
+      return 'gcp-na';
+    default:
+      return 'us';
+  }
+};
+
 // Initialize Contentstack Stack
 let Stack = null;
 
 if (typeof window !== 'undefined' && CONTENTSTACK_CONFIG.api_key && CONTENTSTACK_CONFIG.delivery_token) {
   try {
+    const mappedRegion = getContentstackRegion(CONTENTSTACK_CONFIG.region);
+    console.log('🌍 Contentstack region mapping:', CONTENTSTACK_CONFIG.region, '→', mappedRegion);
+    
     Stack = Contentstack.Stack({
       api_key: CONTENTSTACK_CONFIG.api_key,
       delivery_token: CONTENTSTACK_CONFIG.delivery_token,
       environment: CONTENTSTACK_CONFIG.environment,
-      region: CONTENTSTACK_CONFIG.region,
+      region: mappedRegion,
     });
   } catch (error) {
     console.error('Failed to initialize Contentstack:', error);
@@ -39,16 +61,28 @@ export async function fetchHeaderContent() {
   }
 
   try {
+    console.log('🔍 Fetching header content from Contentstack...');
+    
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Contentstack API timeout')), 5000);
+    });
+    
     const Query = Stack.ContentType('header').Query();
-    const result = await Query.toJSON().find();
+    const fetchPromise = Query.toJSON().find();
+    
+    const result = await Promise.race([fetchPromise, timeoutPromise]);
     
     if (result[0] && result[0].length > 0) {
+      console.log('✅ Header content fetched successfully');
       return result[0][0]; // First entry
     }
     
+    console.log('⚠️ No header content found, using fallback');
     return getHeaderFallback();
   } catch (error) {
-    console.error('Error fetching header content from Contentstack:', error);
+    console.error('❌ Error fetching header content from Contentstack:', error);
+    console.log('🔄 Falling back to default header content');
     return getHeaderFallback();
   }
 }
@@ -64,16 +98,28 @@ export async function fetchFooterContent() {
   }
 
   try {
+    console.log('🔍 Fetching footer content from Contentstack...');
+    
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Contentstack API timeout')), 5000);
+    });
+    
     const Query = Stack.ContentType('footer').Query();
-    const result = await Query.toJSON().find();
+    const fetchPromise = Query.toJSON().find();
+    
+    const result = await Promise.race([fetchPromise, timeoutPromise]);
     
     if (result[0] && result[0].length > 0) {
+      console.log('✅ Footer content fetched successfully');
       return result[0][0]; // First entry
     }
     
+    console.log('⚠️ No footer content found, using fallback');
     return getFooterFallback();
   } catch (error) {
-    console.error('Error fetching footer content from Contentstack:', error);
+    console.error('❌ Error fetching footer content from Contentstack:', error);
+    console.log('🔄 Falling back to default footer content');
     return getFooterFallback();
   }
 }

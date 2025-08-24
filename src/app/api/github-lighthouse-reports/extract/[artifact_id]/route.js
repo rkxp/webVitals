@@ -38,21 +38,29 @@ export async function GET(request, { params }) {
     const zipEntries = zip.getEntries();
     
     const lighthouseReports = [];
+    const htmlReports = [];
     
-    // Extract Lighthouse JSON reports
+    // Extract Lighthouse reports (both JSON and HTML)
     console.log('🔍 Processing ZIP entries:', zipEntries.map(e => e.entryName));
     
     zipEntries.forEach(entry => {
       console.log('📂 Processing entry:', entry.entryName);
       
-      // Check for both the new .lighthouseci structure and old public/lighthouse-reports structure
-      const isLighthouseReport = (
+      // Check for Lighthouse JSON reports
+      const isLighthouseJsonReport = (
         (entry.entryName.includes('.lighthouseci/') && entry.entryName.endsWith('.json')) ||
         (entry.entryName.includes('public/lighthouse-reports/') && entry.entryName.endsWith('.json')) ||
         (entry.entryName.includes('lighthouse-artifacts/') && entry.entryName.endsWith('.json'))
       ) && !entry.entryName.includes('manifest.json') && !entry.entryName.includes('workflow-metadata.json');
       
-      if (isLighthouseReport) {
+      // Check for Lighthouse HTML reports
+      const isLighthouseHtmlReport = (
+        (entry.entryName.includes('.lighthouseci/') && entry.entryName.endsWith('.html')) ||
+        (entry.entryName.includes('public/lighthouse-reports/') && entry.entryName.endsWith('.html')) ||
+        (entry.entryName.includes('lighthouse-artifacts/') && entry.entryName.endsWith('.html'))
+      );
+      
+      if (isLighthouseJsonReport) {
         console.log('✅ Found Lighthouse report:', entry.entryName);
         
         try {
@@ -114,12 +122,39 @@ export async function GET(request, { params }) {
           console.error(`Error parsing Lighthouse report ${entry.entryName}:`, parseError);
         }
       }
+      
+      // Process HTML reports
+      if (isLighthouseHtmlReport) {
+        console.log('✅ Found Lighthouse HTML report:', entry.entryName);
+        
+        try {
+          const htmlContent = entry.getData().toString('utf8');
+          
+          // Extract basic info from HTML content
+          const urlMatch = htmlContent.match(/<title[^>]*>([^<]+)<\/title>/i);
+          const title = urlMatch ? urlMatch[1].trim() : 'Lighthouse Report';
+          
+          // Try to extract URL from HTML content
+          const urlMatch2 = htmlContent.match(/URL: ([^\n\r<]+)/i);
+          const url = urlMatch2 ? urlMatch2[1].trim() : 'Unknown URL';
+          
+          htmlReports.push({
+            filename: entry.entryName.split('/').pop(),
+            title: title,
+            url: url,
+            size: entry.header.size,
+            content: htmlContent.substring(0, 1000) + '...' // First 1000 chars for preview
+          });
+        } catch (parseError) {
+          console.error(`Error processing HTML report ${entry.entryName}:`, parseError);
+        }
+      }
     });
     
-    console.log(`📊 Extracted ${lighthouseReports.length} Lighthouse reports`);
+    console.log(`📊 Extracted ${lighthouseReports.length} Lighthouse JSON reports and ${htmlReports.length} HTML reports`);
     
     // If no reports found, check for workflow metadata to explain why
-    if (lighthouseReports.length === 0) {
+    if (lighthouseReports.length === 0 && htmlReports.length === 0) {
       const metadataEntry = zipEntries.find(entry => 
         entry.entryName.includes('workflow-metadata.json')
       );
@@ -148,12 +183,14 @@ export async function GET(request, { params }) {
       });
     }
     
-    return NextResponse.json({
-      success: true,
-      artifact_id,
-      reports: lighthouseReports,
-      report_count: lighthouseReports.length
-    });
+          return NextResponse.json({
+        success: true,
+        artifact_id,
+        reports: lighthouseReports,
+        html_reports: htmlReports,
+        report_count: lighthouseReports.length,
+        html_report_count: htmlReports.length
+      });
     
   } catch (error) {
     console.error('Error extracting Lighthouse data:', error);
